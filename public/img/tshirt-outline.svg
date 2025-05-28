@@ -1,0 +1,7 @@
+<svg width="400" height="500" viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <g id="tshirt-base">
+    <path id="tshirt-body" d="M100 100 L50 50 Q40 40 60 20 L120 10 Q200 0 280 10 L340 20 Q360 40 350 50 L300 100 L300 400 Q300 450 200 450 Q100 450 100 400 Z" fill="#A9A9A9" stroke="#333" stroke-width="4"/>
+    <rect x="120" y="10" width="40" height="40" rx="20" fill="#A9A9A9" stroke="#333" stroke-width="4"/>
+    <rect x="240" y="10" width="40" height="40" rx="20" fill="#A9A9A9" stroke="#333" stroke-width="4"/>
+  </g>
+</svg> 
