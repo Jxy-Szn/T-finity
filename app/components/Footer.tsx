@@ -35,11 +35,11 @@ const footerSections = [
     ],
   },
   {
-    title: "Social",
+    title: "Other Products",
     links: [
-      { title: "Instagram", href: "#" },
-      { title: "Twitter", href: "#" },
-      { title: "Facebook", href: "#" },
+      { title: "Sports", href: "#" },
+      { title: "Fancy", href: "#" },
+      { title: "Spring", href: "#" },
     ],
   },
   {

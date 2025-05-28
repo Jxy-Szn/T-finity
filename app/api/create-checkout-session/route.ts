@@ -1,51 +1,65 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { sendOrderConfirmationEmail } from "@/lib/email";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2023-10-16",
 });
 
-function getEstimatedDeliveryDate(shippingMethod: string): string {
-  const today = new Date();
-  const deliveryDays =
-    shippingMethod === "standard" ? 5 : shippingMethod === "express" ? 2 : 1;
-  const deliveryDate = new Date(today.setDate(today.getDate() + deliveryDays));
-  return deliveryDate.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
 export async function POST(req: Request) {
   try {
-    const { orderId, items, shipping, total, customerInfo } = await req.json();
+    const { orderId, items, shipping, customerInfo } = await req.json();
+
+    // Validate input data (optional but recommended)
+    if (
+      !orderId ||
+      !items ||
+      items.length === 0 ||
+      !shipping ||
+      !customerInfo
+    ) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Calculate total amount on the server to prevent tampering
+    const totalAmount = items.reduce(
+      (sum: number, item: any) => sum + item.price * item.quantity,
+      0
+    );
+    const totalWithShipping = totalAmount + shipping.price;
+
+    // Create line items for Stripe
+    const line_items = items.map((item: any) => ({
+      price_data: {
+        currency: "usd", // Ensure currency is consistent
+        product_data: {
+          name: item.name,
+          images: item.images || [], // Ensure images is an array
+        },
+        unit_amount: Math.round(item.price * 100), // Convert to cents
+      },
+      quantity: item.quantity,
+    }));
 
     // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
-      line_items: items.map((item: any) => ({
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: item.name,
-            images: item.images,
-          },
-          unit_amount: Math.round(item.price * 100), // Convert to cents
-        },
-        quantity: item.quantity,
-      })),
+      line_items: line_items,
       mode: "payment",
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/payments/unsuccessful`,
       customer_email: customerInfo.email,
       metadata: {
-        orderId,
+        orderId: String(orderId),
+        customerName: customerInfo.name,
+        customerEmail: customerInfo.email,
+        items: JSON.stringify(items),
+        shipping: JSON.stringify(shipping),
       },
       shipping_address_collection: {
-        allowed_countries: ["US", "CA", "GB"], // Add more countries as needed
+        allowed_countries: ["US", "CA", "GB"],
       },
       shipping_options: [
         {
@@ -81,32 +95,11 @@ export async function POST(req: Request) {
       ],
     });
 
-    // Calculate order date and estimated delivery
-    const orderDate = new Date().toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-    const estimatedDelivery = getEstimatedDeliveryDate(shipping.id);
-
-    // Send order confirmation email
-    await sendOrderConfirmationEmail({
-      email: customerInfo.email,
-      name: customerInfo.name,
-      orderId,
-      items,
-      total,
-      shipping,
-      orderDate,
-      estimatedDelivery,
-    });
-
     return NextResponse.json({ sessionId: session.id });
   } catch (error) {
     console.error("Error creating checkout session:", error);
     return NextResponse.json(
-      { error: "Error creating checkout session" },
+      { error: "Internal Server Error" },
       { status: 500 }
     );
   }
