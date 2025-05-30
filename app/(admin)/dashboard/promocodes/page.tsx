@@ -18,6 +18,7 @@ import { PromocodesTableSkeleton } from "@/components/skeletons/promocodes-table
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Promocode {
   _id: string;
@@ -61,7 +62,11 @@ export default function PromocodesPage() {
 
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
-    toast.success("Promocode copied to clipboard");
+    toast.success("Promocode copied to clipboard", {
+      description: `Code: ${code}`,
+      duration: 2000,
+      position: "top-center",
+    });
   };
 
   const getStatusColor = (status: Promocode["status"]) => {
@@ -80,7 +85,11 @@ export default function PromocodesPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Promocodes</h1>
+        {loading ? (
+          <Skeleton className="h-8 w-48" />
+        ) : (
+          <h1 className="text-3xl font-bold">Promocodes</h1>
+        )}
         <Button onClick={() => router.push("/dashboard/promocodes/new")}>
           <Plus className="mr-2 h-4 w-4" />
           New Promocode
@@ -89,7 +98,9 @@ export default function PromocodesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Promocode List</CardTitle>
+          <CardTitle>
+            {loading ? <Skeleton className="h-6 w-32" /> : "Promocode List"}
+          </CardTitle>
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -97,6 +108,7 @@ export default function PromocodesPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-8"
+              disabled={loading}
             />
           </div>
         </CardHeader>

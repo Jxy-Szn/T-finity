@@ -9,6 +9,7 @@ import {
   Image,
   ChevronLeft,
   ChevronRight,
+  RotateCcw,
 } from "lucide-react";
 import { useState } from "react";
 import { useDesignStore } from "@/lib/store";
@@ -69,22 +70,60 @@ const sections = [
   },
 ];
 
+const tShirtColors = [
+  { name: "White", color: "#FFFFFF" },
+  { name: "Black", color: "#000000" },
+  { name: "Red", color: "#FF0000" },
+  { name: "Green", color: "#00FF00" },
+  { name: "Blue", color: "#0000FF" },
+  { name: "Orange", color: "#FFA500" },
+  { name: "Purple", color: "#800080" },
+  { name: "Yellow", color: "#FFFF00" },
+  { name: "Brown", color: "#A52A2A" },
+  { name: "Salmon", color: "#FFC0CB" },
+  { name: "Lilac", color: "#E6E6FA" },
+  { name: "Lime", color: "#32CD32" },
+  { name: "Light Brown", color: "#8B4513" },
+  { name: "Army Green", color: "#4B5320" },
+  { name: "Wine", color: "#722F37" },
+  { name: "Deep Blue", color: "#000080" },
+  { name: "Tan", color: "#D2B48C" },
+  { name: "Pebble", color: "#B8B8B8" },
+];
+
 export function LeftPanel() {
   const [activeTab, setActiveTab] = useState(0);
   const [collapsed, setCollapsed] = useState(false);
   const setTShirtColor = useDesignStore((state) => state.setTShirtColor);
+  const toggleView = useDesignStore((state) => state.toggleView);
+  const isFrontView = useDesignStore((state) => state.isFrontView);
 
   // Set Product Colors content dynamically
   sections[3].content = (
-    <div className="grid grid-cols-3 gap-2">
-      {["#FFFFFF", "#000000", "#FF0000", "#00FF00", "#0000FF"].map((color) => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-medium">T-shirt Colors</h3>
         <Button
-          key={color}
-          style={{ backgroundColor: color }}
-          className="h-8 w-8 rounded-full p-0 hover:ring-2"
-          onClick={() => setTShirtColor(color)}
-        />
-      ))}
+          variant="ghost"
+          size="icon"
+          onClick={toggleView}
+          className="h-8 w-8"
+          title={isFrontView ? "Show back view" : "Show front view"}
+        >
+          <RotateCcw className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="grid grid-cols-4 gap-2">
+        {tShirtColors.map(({ name, color }) => (
+          <Button
+            key={color}
+            style={{ backgroundColor: color }}
+            className="h-8 w-8 rounded-full p-0 hover:ring-2"
+            onClick={() => setTShirtColor(color)}
+            title={name}
+          />
+        ))}
+      </div>
     </div>
   );
 

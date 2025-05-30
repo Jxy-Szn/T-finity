@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Home,
   Users,
@@ -37,8 +39,11 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
+import { useNotificationStore } from "@/lib/store/notification";
 
 const AdminSidebar = () => {
+  const { unreadEmailCount } = useNotificationStore();
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="py-4">
@@ -101,50 +106,24 @@ const AdminSidebar = () => {
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild>
-                      <Link href="/dashboard/products/images">
-                        <ImageIcon />
-                        <span>Product Images</span>
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
                 </SidebarMenuSub>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Customer Management */}
+        {/* User Management */}
         <SidebarGroup>
-          <SidebarGroupLabel>Customer Management</SidebarGroupLabel>
+          <SidebarGroupLabel>User Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link href="/dashboard/customers">
                     <Users />
-                    <span>Customers</span>
+                    <span>Users</span>
                   </Link>
                 </SidebarMenuButton>
-                <SidebarMenuSub>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild>
-                      <Link href="/dashboard/customers/orders">
-                        <ShoppingCart />
-                        <span>Order History</span>
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild>
-                      <Link href="/dashboard/customers/export">
-                        <FileSpreadsheet />
-                        <span>Export Data</span>
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                </SidebarMenuSub>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
@@ -162,48 +141,6 @@ const AdminSidebar = () => {
                     <span>Orders</span>
                   </Link>
                 </SidebarMenuButton>
-                <SidebarMenuSub>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild>
-                      <Link href="/dashboard/orders/pending">
-                        <BarChart />
-                        <span>Pending</span>
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild>
-                      <Link href="/dashboard/orders/processing">
-                        <BarChart />
-                        <span>Processing</span>
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild>
-                      <Link href="/dashboard/orders/shipped">
-                        <BarChart />
-                        <span>Shipped</span>
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild>
-                      <Link href="/dashboard/orders/delivered">
-                        <BarChart />
-                        <span>Delivered</span>
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild>
-                      <Link href="/dashboard/orders/invoices">
-                        <Receipt />
-                        <span>Invoices</span>
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                </SidebarMenuSub>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
@@ -216,29 +153,11 @@ const AdminSidebar = () => {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="/dashboard/discounts">
+                  <Link href="/dashboard/promocodes">
                     <Gift />
                     <span>Promo Codes</span>
                   </Link>
                 </SidebarMenuButton>
-                <SidebarMenuSub>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild>
-                      <Link href="/dashboard/discounts/new">
-                        <Plus />
-                        <span>Create Promo</span>
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild>
-                      <Link href="/dashboard/discounts/manage">
-                        <Tags />
-                        <span>Manage Codes</span>
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
-                </SidebarMenuSub>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
@@ -273,7 +192,9 @@ const AdminSidebar = () => {
                     <span>Emails</span>
                   </Link>
                 </SidebarMenuButton>
-                <SidebarMenuBadge>3</SidebarMenuBadge>
+                {unreadEmailCount > 0 && (
+                  <SidebarMenuBadge>{unreadEmailCount}</SidebarMenuBadge>
+                )}
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>

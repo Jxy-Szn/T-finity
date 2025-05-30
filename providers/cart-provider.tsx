@@ -3,6 +3,7 @@
 import type React from "react";
 import { createContext, useContext, useState, useEffect } from "react";
 import { products } from "@/data/products";
+import { toast } from "sonner";
 
 export type CartItem = {
   id: string;
@@ -86,24 +87,40 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const shipping = selectedShippingMethod.price;
   const total = subtotal + shipping - discount;
 
+  // Log cart state changes
+  useEffect(() => {
+    console.log("Cart state updated:", {
+      items,
+      subtotal,
+      shipping,
+      total,
+      selectedShippingMethod,
+      discount,
+    });
+  }, [items, subtotal, shipping, total, selectedShippingMethod, discount]);
+
   // Load cart from localStorage on client
   useEffect(() => {
     const savedCart = localStorage.getItem("cart");
     if (savedCart) {
       try {
-        setItems(JSON.parse(savedCart));
+        const parsedCart = JSON.parse(savedCart);
+        console.log("Loading cart from localStorage:", parsedCart);
+        setItems(parsedCart);
       } catch (e) {
-        console.error("Failed to parse cart from localStorage");
+        console.error("Failed to parse cart from localStorage:", e);
       }
     }
   }, []);
 
   // Save cart to localStorage when it changes
   useEffect(() => {
+    console.log("Saving cart to localStorage:", items);
     localStorage.setItem("cart", JSON.stringify(items));
   }, [items]);
 
   const addItem = (item: CartItem) => {
+    console.log("Adding item to cart:", item);
     setItems((prevItems) => {
       const existingItem = prevItems.find((i) => i.id === item.id);
       if (existingItem) {
@@ -111,38 +128,65 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           i.id === item.id ? { ...i, quantity: i.quantity + item.quantity } : i
         );
       }
+      toast.success("Added to cart");
       return [...prevItems, item];
     });
   };
 
   const removeItem = (id: string) => {
-    setItems((prevItems) => prevItems.filter((item) => item.id !== id));
+    console.log("Removing item from cart:", id);
+    setItems((prevItems) => {
+      const item = prevItems.find((i) => i.id === id);
+      if (item) {
+        toast.success("Removed from cart");
+      }
+      return prevItems.filter((item) => item.id !== id);
+    });
   };
 
   const updateQuantity = (id: string, quantity: number) => {
     if (quantity < 1) return;
+    console.log("Updating item quantity:", { id, quantity });
     setItems((prevItems) =>
       prevItems.map((item) => (item.id === id ? { ...item, quantity } : item))
     );
   };
 
   const clearCart = () => {
+    console.log("Clearing cart");
     setItems([]);
     localStorage.removeItem("cart");
+    toast.success("Cart cleared");
   };
 
   const toggleCart = () => setIsOpen((prev) => !prev);
   const closeCart = () => setIsOpen(false);
   const openCart = () => setIsOpen(true);
 
-  const applyPromoCode = () => {
-    // Simple promo code logic - in a real app, you'd validate this against a backend
-    if (promoCode.toLowerCase() === "discount10") {
-      setDiscount(subtotal * 0.1); // 10% discount
-    } else if (promoCode.toLowerCase() === "discount20") {
-      setDiscount(subtotal * 0.2); // 20% discount
-    } else {
+  const applyPromoCode = async () => {
+    if (!promoCode.trim()) {
+      toast.error("Please enter a promo code");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/promocodes/apply?code=${promoCode}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to apply promo code");
+      }
+
+      if (data.type === "percentage") {
+        setDiscount(subtotal * (data.discount / 100));
+      } else {
+        setDiscount(data.discount);
+      }
+
+      toast.success("Promo code applied successfully");
+    } catch (error: any) {
       setDiscount(0);
+      toast.error(error.message || "Failed to apply promo code");
     }
   };
 

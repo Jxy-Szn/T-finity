@@ -6,15 +6,10 @@ import Link from "next/link";
 
 const Logo = () => {
   const companies = [
-    "/img/logo-slider/image1.png",
-    "/img/logo-slider/image2.png",
-    "/img/logo-slider/image3.png",
-    "/img/logo-slider/image4.png",
-    "/img/logo-slider/image5.png",
-    "/img/logo-slider/image6.png",
-    "/img/logo-slider/image7.png",
-    "/img/logo-slider/image8.png",
-    "/img/logo-slider/image9.png",
+    "/img/logo-slider/image10.png",
+    "/img/logo-slider/image11.png",
+    "/img/logo-slider/image12.png",
+    "/img/logo-slider/image13.png",
   ];
 
   return (
@@ -28,9 +23,8 @@ const Logo = () => {
             </span>
           </h2>
           <p className="mt-4 text-lg">
-            Join thousands of organizations that rely on our solutions to
-            elevate their business. From startups to enterprises, we help
-            everyone achieve their goals with cutting-edge technology.
+            Join thousands of individuals and brands that trust our t-shirt
+            solutions to elevate their style and express their unique identity.
           </p>
           <Link href="/about">
             <Button className="mt-8 flex items-center space-x-2 hover:cursor-pointer">

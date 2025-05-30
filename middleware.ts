@@ -33,6 +33,10 @@ const protectedRoutes: Record<string, RouteConfig> = {
     requiresAuth: false,
     redirectIfAuth: true,
   },
+  "/payments/checkout": {
+    requiresAuth: true,
+    allowedRoles: ["admin", "customer"],
+  },
 };
 
 export async function middleware(request: NextRequest) {
@@ -139,5 +143,5 @@ export async function middleware(request: NextRequest) {
 
 // Configure which routes to run middleware on
 export const config = {
-  matcher: ["/dashboard/:path*", "/signin"],
+  matcher: ["/dashboard/:path*", "/signin", "/payments/checkout"],
 };

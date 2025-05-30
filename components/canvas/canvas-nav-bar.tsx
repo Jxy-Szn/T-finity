@@ -1,6 +1,7 @@
 import Switch from "@/app/components/Switch";
 import { Shirt } from "lucide-react";
 import Link from "next/link";
+import CartButton from "../cart-button";
 
 if (typeof window !== "undefined") {
   const id = "pacifico-font";
@@ -32,6 +33,9 @@ const CanvasNavBar = () => {
       {/* Right: Theme Switch */}
       <div className="flex items-center">
         <Switch />
+      </div>
+      <div>
+        <CartButton />
       </div>
     </nav>
   );

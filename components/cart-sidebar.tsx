@@ -46,6 +46,7 @@ export function CartSidebar() {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [shippingDropdownOpen, setShippingDropdownOpen] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
 
   // Handle click outside to close
   useEffect(() => {
@@ -110,6 +111,15 @@ export function CartSidebar() {
       setShowClearConfirm(false);
     }
   }, [isOpen]);
+
+  const handleApplyPromo = async () => {
+    setIsApplyingPromo(true);
+    try {
+      await applyPromoCode();
+    } finally {
+      setIsApplyingPromo(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -379,7 +389,7 @@ export function CartSidebar() {
                 </div>
 
                 {/* Promo Code */}
-                <div className="mb-4">
+                <div className="mt-4">
                   <h4 className="text-sm font-medium mb-2 text-foreground">
                     Promo Code
                   </h4>
@@ -387,13 +397,25 @@ export function CartSidebar() {
                     <Input
                       placeholder="Enter promo code"
                       value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
+                      onChange={(e) =>
+                        setPromoCode(e.target.value.toUpperCase())
+                      }
                       className="flex-1"
+                      disabled={isApplyingPromo}
                     />
-                    <Button variant="outline" onClick={applyPromoCode}>
-                      Apply
+                    <Button
+                      variant="outline"
+                      onClick={handleApplyPromo}
+                      disabled={isApplyingPromo || !promoCode.trim()}
+                    >
+                      {isApplyingPromo ? "Applying..." : "Apply"}
                     </Button>
                   </div>
+                  {discount > 0 && (
+                    <div className="mt-2 text-sm text-green-500">
+                      Promo code applied successfully!
+                    </div>
+                  )}
                 </div>
 
                 {/* Order Summary */}

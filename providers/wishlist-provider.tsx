@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { createContext, useContext, useState, useEffect } from "react";
-import { products } from "@/data/products";
+import { toast } from "sonner";
 
 export type WishlistItem = {
   id: string;
@@ -52,12 +52,19 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
       if (prevItems.some((i) => i.id === item.id)) {
         return prevItems;
       }
+      toast.success("Added to wishlist");
       return [...prevItems, item];
     });
   };
 
   const removeItem = (id: string) => {
-    setItems((prevItems) => prevItems.filter((item) => item.id !== id));
+    setItems((prevItems) => {
+      const item = prevItems.find((i) => i.id === id);
+      if (item) {
+        toast.success("Removed from wishlist");
+      }
+      return prevItems.filter((item) => item.id !== id);
+    });
   };
 
   const isInWishlist = (id: string) => {
@@ -67,6 +74,7 @@ export function WishlistProvider({ children }: { children: React.ReactNode }) {
   const clearWishlist = () => {
     setItems([]);
     localStorage.removeItem("wishlist");
+    toast.success("Wishlist cleared");
   };
 
   return (

@@ -1,39 +1,24 @@
 import { NextResponse } from "next/server";
-import { jwtVerify } from "jose";
+import { getSession } from "@/lib/auth";
 import connectDB from "@/lib/db/mongodb";
 import { User } from "@/lib/db/schema";
 
-// JWT secret key
-const JWT_SECRET = process.env.JWT_SECRET!;
-
-// Convert JWT_SECRET to Uint8Array for jose
-const secret = new TextEncoder().encode(JWT_SECRET);
-
-// Middleware to check if user is admin
-async function isAdmin(req: Request) {
-  const token = req.headers.get("authorization")?.split(" ")[1];
-
-  if (!token) {
-    return false;
-  }
-
-  try {
-    const { payload } = await jwtVerify(token, secret);
-    const decoded = payload as {
-      userId: string;
-      email: string;
-      role: "admin" | "customer";
+interface SessionPayload {
+  userId: {
+    buffer: {
+      [key: string]: number;
     };
-    return decoded.role === "admin";
-  } catch {
-    return false;
-  }
+  };
+  email: string;
+  role: string;
 }
 
 export async function POST(req: Request) {
   try {
-    // Check if user is admin
-    if (!(await isAdmin(req))) {
+    const session = (await getSession()) as SessionPayload | null;
+
+    // Check if user is authenticated and is an admin
+    if (!session || session.role !== "admin") {
       return NextResponse.json(
         { error: "Unauthorized. Admin access required." },
         { status: 403 }
@@ -57,6 +42,17 @@ export async function POST(req: Request) {
     const user = await User.findById(userId);
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Don't allow toggling the last admin
+    if (user.role === "admin") {
+      const adminCount = await User.countDocuments({ role: "admin" });
+      if (adminCount <= 1) {
+        return NextResponse.json(
+          { error: "Cannot remove the last admin user" },
+          { status: 400 }
+        );
+      }
     }
 
     // Toggle role between admin and customer

@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Heart, ShoppingCart } from "lucide-react";
-import { useCart } from "@/providers/cart-provider";
+import { Heart } from "lucide-react";
 import { useWishlist } from "@/providers/wishlist-provider";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -27,7 +26,6 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const { addItem } = useCart();
   const {
     addItem: addToWishlist,
     removeItem: removeFromWishlist,
@@ -37,21 +35,9 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const inWishlist = isInWishlist(product._id);
 
-  const handleAddToCart = () => {
-    addItem({
-      id: product._id,
-      name: product.name,
-      price: product.price,
-      originalPrice: product.originalPrice,
-      color: product.colors?.[0]?.value || "",
-      variant: product.sizes?.[0]?.value || "",
-      quantity: 1,
-      image: product.images[0],
-    });
-  };
-
   const toggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (inWishlist) {
       removeFromWishlist(product._id);
     } else {
@@ -71,7 +57,10 @@ export function ProductCard({ product }: ProductCardProps) {
     <>
       <div className="flex flex-col rounded-lg overflow-hidden bg-background border border-border">
         {/* Product Image */}
-        <div className="relative aspect-square overflow-hidden">
+        <div
+          className="relative aspect-square overflow-hidden cursor-pointer"
+          onClick={() => setIsDetailOpen(true)}
+        >
           {product.images[0].startsWith("http") ? (
             <img
               src={product.images[0] || "/placeholder.svg"}
@@ -119,15 +108,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
           </div>
 
-          {/* More Info Link */}
-          <button
-            onClick={() => setIsDetailOpen(true)}
-            className="mt-2 text-sm text-primary underline hover:text-primary/80"
-          >
-            More Info
-          </button>
-
-          {/* Price and Add to Cart */}
+          {/* Price and Wishlist */}
           <div className="mt-2 flex items-center justify-between">
             <div>
               <span className="font-medium text-lg text-foreground">
@@ -139,30 +120,20 @@ export function ProductCard({ product }: ProductCardProps) {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={toggleWishlist}
-                className={cn(
-                  "p-1.5 transition-colors",
-                  inWishlist
-                    ? "text-red-500"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Heart
-                  className="h-4 w-4"
-                  fill={inWishlist ? "currentColor" : "none"}
-                />
-              </button>
-              <button
-                onClick={handleAddToCart}
-                className="flex items-center justify-center rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium hover:bg-primary/90"
-                aria-label="Add to cart"
-              >
-                <ShoppingCart className="h-4 w-4 mr-1.5" />
-                Add to cart
-              </button>
-            </div>
+            <button
+              onClick={toggleWishlist}
+              className={cn(
+                "p-1.5 transition-colors",
+                inWishlist
+                  ? "text-red-500"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Heart
+                className="h-4 w-4"
+                fill={inWishlist ? "currentColor" : "none"}
+              />
+            </button>
           </div>
         </div>
       </div>

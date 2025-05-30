@@ -2,11 +2,10 @@ import "../globals.css";
 import { CartProvider } from "@/providers/cart-provider";
 import { WishlistProvider } from "@/providers/wishlist-provider";
 import Navbar from "../components/Navbar";
-import Nav2 from "../components/Nav2";
-import { PromoCodeBanner } from "../components/PromoCodeBanner";
 import Footer from "../components/Footer";
 import { CartSidebar } from "@/components/cart-sidebar";
 import { Metadata } from "next";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "T-finity",
@@ -22,11 +21,16 @@ export default function PagesLayout({
     <WishlistProvider>
       <CartProvider>
         <Navbar />
-        <Nav2 />
-        <PromoCodeBanner />
         <main>{children}</main>
         <Footer />
         <CartSidebar />
+        <Toaster
+          position="top-center"
+          duration={3000}
+          theme="dark"
+          richColors
+          closeButton
+        />
       </CartProvider>
     </WishlistProvider>
   );

@@ -56,6 +56,19 @@ export interface IOrder {
   updatedAt: Date;
 }
 
+// Define the Promocode interface
+export interface IPromocode {
+  code: string;
+  discount: number;
+  type: "percentage" | "fixed";
+  status: "active" | "expired" | "used";
+  usageCount: number;
+  maxUsage: number;
+  expiresAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Create the User schema
 const userSchema = new Schema<IUser>(
   {
@@ -171,6 +184,58 @@ const orderSchema = new Schema<IOrder>(
   }
 );
 
+// Create the Promocode schema
+const promocodeSchema = new Schema<IPromocode>(
+  {
+    code: {
+      type: String,
+      required: true,
+      unique: true,
+      uppercase: true,
+      trim: true,
+    },
+    discount: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    type: {
+      type: String,
+      required: true,
+      enum: ["percentage", "fixed"],
+    },
+    status: {
+      type: String,
+      required: true,
+      enum: ["active", "expired", "used"],
+      default: "active",
+    },
+    usageCount: {
+      type: Number,
+      required: true,
+      default: 0,
+      min: 0,
+    },
+    maxUsage: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    expiresAt: {
+      type: Date,
+      required: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Add index for faster queries
+promocodeSchema.index({ code: 1 });
+promocodeSchema.index({ status: 1 });
+promocodeSchema.index({ expiresAt: 1 });
+
 // Create and export the models
 export const User =
   mongoose.models.User || mongoose.model<IUser>("User", userSchema);
@@ -179,3 +244,6 @@ export const UnverifiedUser =
   mongoose.model<IUnverifiedUser>("UnverifiedUser", unverifiedUserSchema);
 export const Order =
   mongoose.models.Order || mongoose.model<IOrder>("Order", orderSchema);
+export const Promocode =
+  mongoose.models.Promocode ||
+  mongoose.model<IPromocode>("Promocode", promocodeSchema);

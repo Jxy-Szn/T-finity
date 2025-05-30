@@ -68,7 +68,7 @@ const Navbar = () => {
           style={{ fontFamily: "Pacifico, cursive" }}
           className="text-3xl font-medium text-foreground tracking-tight select-none pl-10"
         >
-          Tifinity
+          T-finity
         </span>
       </Link>
 

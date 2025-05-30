@@ -62,6 +62,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { useNotificationStore } from "@/lib/store/notification";
 
 interface Email {
   _id: string;
@@ -101,6 +102,7 @@ export default function EmailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const { user } = useAuthStore();
+  const { setUnreadEmailCount } = useNotificationStore();
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const fetchEmails = async () => {
@@ -117,6 +119,12 @@ export default function EmailsPage() {
 
       const data = await response.json();
       setEmails(data);
+
+      // Update unread email count
+      const unreadCount = data.filter(
+        (email: Email) => !email.isRead && email.to === user?.email
+      ).length;
+      setUnreadEmailCount(unreadCount);
     } catch (error) {
       console.error("Error fetching emails:", error);
       toast({

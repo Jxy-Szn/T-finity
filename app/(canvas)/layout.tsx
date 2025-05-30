@@ -3,6 +3,7 @@ import React from "react";
 import "../globals.css";
 import { Metadata } from "next";
 import CanvasNavBar from "@/components/canvas/canvas-nav-bar";
+import { CartProvider } from "@/providers/cart-provider";
 
 export const metadata: Metadata = {
   title: "Design Studios",
@@ -16,8 +17,10 @@ interface CanvasLayoutProps {
 export default function CanvasLayout({ children }: CanvasLayoutProps) {
   return (
     <>
-      <CanvasNavBar />
-      {children}
+      <CartProvider>
+        <CanvasNavBar />
+        {children}
+      </CartProvider>
     </>
   );
 }

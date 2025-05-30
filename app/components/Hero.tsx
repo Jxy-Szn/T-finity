@@ -1,5 +1,5 @@
 "use client";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 import React from "react";
 import { ImagesSlider } from "../../components/ui/images-slider";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ export function Hero() {
     "/img/hero/slide6.jpg",
   ];
   return (
-    <ImagesSlider className="h-[30rem]" images={images}>
+    <ImagesSlider className="h-[20rem]" images={images}>
       <motion.div
         initial={{
           opacity: 0,
