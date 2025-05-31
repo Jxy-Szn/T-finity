@@ -11,9 +11,10 @@ import {
   User,
   CreditCard,
   Shirt,
+  Headphones,
+  Heart,
+  ShoppingCart,
 } from "lucide-react";
-import { WishlistButton } from "@/components/wishlist-button";
-import { CartButton } from "@/components/cart-button";
 import { useAuthStore } from "@/lib/store/auth";
 import {
   DropdownMenu,
@@ -57,6 +58,10 @@ const Navbar = () => {
       console.error("Logout failed:", error);
       toast.error("Failed to logout. Please try again.");
     }
+  };
+
+  const handleSupportClick = () => {
+    window.location.href = "mailto:byronjason902@gmail.com";
   };
 
   return (
@@ -143,12 +148,12 @@ const Navbar = () => {
 
         {/* Wishlist */}
         <div className="flex items-center space-x-1 cursor-pointer">
-          <WishlistButton />
+          <Heart size={24} />
         </div>
 
         {/* Cart */}
         <div className="relative flex items-center space-x-1 cursor-pointer pr-10">
-          <CartButton />
+          <ShoppingCart size={24} />
         </div>
       </div>
     </nav>

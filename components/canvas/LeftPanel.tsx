@@ -5,14 +5,19 @@ import {
   Upload,
   Text,
   Palette,
-  Tag,
-  Image,
   ChevronLeft,
   ChevronRight,
   RotateCcw,
+  Ruler,
+  Shirt,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useDesignStore } from "@/lib/store";
+import {
+  Canvas as FabricCanvas,
+  Image as FabricImage,
+  Text as FabricText,
+} from "fabric";
 
 const sections = [
   {
@@ -20,11 +25,48 @@ const sections = [
     icon: <Upload className="h-5 w-5" />,
     content: (
       <div className="space-y-2">
-        <Button variant="outline" className="w-full">
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={() => {
+            const input = document.getElementById("upload") as HTMLInputElement;
+            input?.click();
+          }}
+        >
           <Upload className="mr-2 h-4 w-4" />
           Upload File
         </Button>
-        <Input type="file" className="hidden" id="upload" />
+        <Input
+          type="file"
+          className="hidden"
+          id="upload"
+          accept="image/*"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                const imgUrl = event.target?.result as string;
+                const img = new Image();
+                img.src = imgUrl;
+                img.onload = () => {
+                  const canvas = useDesignStore.getState().draw;
+                  if (canvas) {
+                    const fabricImage = new FabricImage(img, {
+                      left: 100,
+                      top: 100,
+                      scaleX: 0.5,
+                      scaleY: 0.5,
+                    });
+                    canvas.add(fabricImage);
+                    canvas.renderAll();
+                  }
+                };
+              };
+              reader.readAsDataURL(file);
+            }
+          }}
+        />
       </div>
     ),
   },
@@ -33,22 +75,70 @@ const sections = [
     icon: <Text className="h-5 w-5" />,
     content: (
       <div className="space-y-2">
-        <Input placeholder="Enter text" />
-        <Button className="w-full">Add to Design</Button>
+        <Input
+          placeholder="Enter text"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              const input = e.target as HTMLInputElement;
+              const text = input.value;
+              if (text) {
+                const canvas = useDesignStore.getState().draw;
+                if (canvas) {
+                  const fabricText = new FabricText(text, {
+                    left: 100,
+                    top: 100,
+                    fontSize: 20,
+                    fill: "#000000",
+                  });
+                  canvas.add(fabricText);
+                  canvas.renderAll();
+                  input.value = "";
+                }
+              }
+            }
+          }}
+        />
+        <Button
+          className="w-full"
+          onClick={() => {
+            const input = document.querySelector(
+              'input[placeholder="Enter text"]'
+            ) as HTMLInputElement;
+            const text = input.value;
+            if (text) {
+              const canvas = useDesignStore.getState().draw;
+              if (canvas) {
+                const fabricText = new FabricText(text, {
+                  left: 100,
+                  top: 100,
+                  fontSize: 20,
+                  fill: "#000000",
+                });
+                canvas.add(fabricText);
+                canvas.renderAll();
+                input.value = "";
+              }
+            }
+          }}
+        >
+          Add to Design
+        </Button>
       </div>
     ),
   },
   {
-    title: "Add Art",
-    icon: <Image className="h-5 w-5" />,
+    title: "Size",
+    icon: <Ruler className="h-5 w-5" />,
+    content: (
+      <div className="space-y-2">{/* Size content will be added later */}</div>
+    ),
+  },
+  {
+    title: "Product Type",
+    icon: <Shirt className="h-5 w-5" />,
     content: (
       <div className="space-y-2">
-        <Button variant="outline" className="w-full">
-          Browse Library
-        </Button>
-        <Button variant="outline" className="w-full">
-          Upload Custom
-        </Button>
+        {/* Product type content will be added later */}
       </div>
     ),
   },
@@ -56,17 +146,6 @@ const sections = [
     title: "Product Colors",
     icon: <Palette className="h-5 w-5" />,
     content: null, // Will be set below
-  },
-  {
-    title: "Add Name",
-    icon: <Tag className="h-5 w-5" />,
-    content: (
-      <div className="space-y-2">
-        <Input placeholder="Enter name" />
-        <Input placeholder="Enter number" type="number" />
-        <Button className="w-full">Add to Design</Button>
-      </div>
-    ),
   },
 ];
 
@@ -99,7 +178,7 @@ export function LeftPanel() {
   const isFrontView = useDesignStore((state) => state.isFrontView);
 
   // Set Product Colors content dynamically
-  sections[3].content = (
+  sections[4].content = (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">T-shirt Colors</h3>

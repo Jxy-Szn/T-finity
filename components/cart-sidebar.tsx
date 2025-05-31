@@ -12,7 +12,6 @@ import {
   Truck,
   Check,
   ChevronDown,
-  Edit2,
   Trash2,
   ShoppingCart,
 } from "lucide-react";
@@ -52,6 +51,7 @@ export function CartSidebar() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
+        isOpen &&
         sidebarRef.current &&
         !sidebarRef.current.contains(event.target as Node)
       ) {
@@ -59,43 +59,12 @@ export function CartSidebar() {
       }
     };
 
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isOpen, closeCart]);
 
-  // Handle click outside to close shipping dropdown
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        shippingDropdownOpen &&
-        sidebarRef.current &&
-        !event
-          .composedPath()
-          .some(
-            (el) =>
-              (el as HTMLElement)?.classList?.contains("shipping-dropdown") ||
-              (el as HTMLElement)?.classList?.contains("shipping-option")
-          )
-      ) {
-        setShippingDropdownOpen(false);
-      }
-    };
-
-    if (shippingDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [shippingDropdownOpen]);
-
-  // Handle clear cart confirmation
   const handleClearCart = () => {
     if (showClearConfirm) {
       clearCart();
@@ -105,28 +74,15 @@ export function CartSidebar() {
     }
   };
 
-  // Reset clear confirmation when cart is closed
-  useEffect(() => {
-    if (!isOpen) {
-      setShowClearConfirm(false);
-    }
-  }, [isOpen]);
-
-  const handleApplyPromo = async () => {
-    setIsApplyingPromo(true);
-    try {
-      await applyPromoCode();
-    } finally {
-      setIsApplyingPromo(false);
-    }
-  };
-
   if (!isOpen) return null;
 
   return (
     <div
       className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm transition-opacity duration-500 ease-in-out"
-      style={{ opacity: isOpen ? 1 : 0 }}
+      style={{
+        opacity: isOpen ? 1 : 0,
+        pointerEvents: isOpen ? "auto" : "none",
+      }}
     >
       <div
         ref={sidebarRef}
@@ -224,229 +180,187 @@ export function CartSidebar() {
               )}
 
               {/* Cart Items */}
-              <div className="space-y-3">
-                {items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex rounded-lg bg-muted overflow-hidden"
-                  >
-                    <div className="relative h-[80px] w-[80px] flex-shrink-0 bg-background group">
-                      {item.image.startsWith("http") ? (
-                        <img
-                          src={item.image || "/placeholder.svg"}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <Image
-                          src={item.image || "/placeholder.svg"}
-                          alt={item.name}
-                          fill
-                          className="object-cover"
-                        />
-                      )}
-                      {/* Edit icon overlay that appears on hover */}
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 bg-background/50 group-hover:opacity-100 transition-opacity">
-                        <div className="rounded-full bg-primary p-2">
-                          <Edit2 className="h-4 w-4 text-primary-foreground" />
-                        </div>
+              {items.map((item) => (
+                <div key={item.id} className="flex gap-4 rounded-lg border p-4">
+                  <div className="relative h-20 w-20 overflow-hidden rounded-md bg-muted">
+                    {item.image.startsWith("data:image") ? (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <Image
+                        src={item.image || "/placeholder.svg"}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                      />
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col p-3">
+                    <div className="flex justify-between">
+                      <div>
+                        <h3 className="font-medium text-foreground">
+                          {item.name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {item.color} • {item.variant}
+                        </p>
                       </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeItem(item.id)}
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <div className="flex flex-1 flex-col p-3">
-                      <div className="flex justify-between">
-                        <div>
-                          <h3 className="font-medium text-foreground">
-                            {item.name}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            {item.color} • {item.variant}
-                          </p>
-                        </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <div className="flex items-center rounded-md border border-border bg-muted">
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => removeItem(item.id)}
-                          className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+                          className="h-8 w-8 rounded-none text-muted-foreground hover:text-foreground hover:bg-transparent"
+                          onClick={() =>
+                            updateQuantity(item.id, item.quantity - 1)
+                          }
+                          disabled={item.quantity <= 1}
                         >
-                          <X className="h-4 w-4" />
+                          <span className="font-medium">-</span>
+                          <span className="sr-only">Decrease quantity</span>
+                        </Button>
+                        <span className="w-8 text-center text-foreground">
+                          {item.quantity}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-none text-muted-foreground hover:text-foreground hover:bg-transparent"
+                          onClick={() =>
+                            updateQuantity(item.id, item.quantity + 1)
+                          }
+                        >
+                          <span className="font-medium">+</span>
+                          <span className="sr-only">Increase quantity</span>
                         </Button>
                       </div>
-                      <div className="mt-auto flex items-center justify-between">
-                        <div className="flex items-center rounded-md border border-border bg-muted">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 rounded-none text-muted-foreground hover:text-foreground hover:bg-transparent"
-                            onClick={() =>
-                              updateQuantity(item.id, item.quantity - 1)
-                            }
-                            disabled={item.quantity <= 1}
-                          >
-                            <span className="font-medium">-</span>
-                            <span className="sr-only">Decrease quantity</span>
-                          </Button>
-                          <span className="w-8 text-center text-foreground">
-                            {item.quantity}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 rounded-none text-muted-foreground hover:text-foreground hover:bg-transparent"
-                            onClick={() =>
-                              updateQuantity(item.id, item.quantity + 1)
-                            }
-                          >
-                            <span className="font-medium">+</span>
-                            <span className="sr-only">Increase quantity</span>
-                          </Button>
+                      <div className="text-right">
+                        <div className="font-medium">
+                          {formatCurrency(item.price)}
                         </div>
-                        <div className="text-right">
-                          <div className="font-medium text-foreground">
-                            {formatCurrency(item.price)}
+                        {item.originalPrice && (
+                          <div className="text-sm text-muted-foreground line-through">
+                            {formatCurrency(item.originalPrice)}
                           </div>
-                          {item.originalPrice && (
-                            <div className="text-sm text-muted-foreground line-through">
-                              {formatCurrency(item.originalPrice)}
-                            </div>
-                          )}
-                        </div>
+                        )}
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ))}
 
-              {/* Order Summary - now part of the scrollable content */}
-              <div className="rounded-lg bg-muted p-4">
-                <h3 className="mb-3 font-medium text-foreground">
-                  Order Summary
-                </h3>
-
-                {/* Shipping Method */}
-                <div className="mb-4">
-                  <h4 className="text-sm font-medium mb-2 text-foreground">
-                    Shipping Method
-                  </h4>
-                  <div className="relative">
-                    <div
-                      className="shipping-dropdown w-full rounded-md border border-border bg-background p-3 text-sm cursor-pointer flex justify-between items-center"
-                      onClick={() =>
-                        setShippingDropdownOpen(!shippingDropdownOpen)
-                      }
-                    >
-                      <div>
-                        <div className="font-medium text-foreground">
-                          {selectedShippingMethod.name}
-                        </div>
-                        <div className="text-muted-foreground text-xs">
-                          {selectedShippingMethod.description}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-foreground">
-                          ${selectedShippingMethod.price.toFixed(2)}
-                        </span>
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                      </div>
+              {/* Order Summary */}
+              <div className="rounded-lg border p-4">
+                <h3 className="font-medium">Order Summary</h3>
+                <div className="mt-4 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Subtotal</span>
+                    <span>{formatCurrency(subtotal)}</span>
+                  </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Discount</span>
+                      <span className="text-green-600">
+                        -{formatCurrency(discount)}
+                      </span>
                     </div>
-
-                    {shippingDropdownOpen && (
-                      <div className="absolute z-10 mt-1 w-full rounded-md border border-border bg-background shadow-lg">
-                        {shippingMethods.map((method) => (
-                          <div
-                            key={method.id}
-                            className={cn(
-                              "shipping-option p-3 cursor-pointer hover:bg-muted flex justify-between items-center",
-                              method.id === selectedShippingMethod.id &&
-                                "bg-muted"
-                            )}
-                            onClick={() => {
-                              setSelectedShippingMethod(method);
-                              setShippingDropdownOpen(false);
-                            }}
-                          >
-                            <div>
-                              <div className="font-medium text-foreground">
-                                {method.name}
-                              </div>
-                              <div className="text-muted-foreground text-xs">
-                                {method.description}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-foreground">
-                                ${method.price.toFixed(2)}
-                              </span>
-                              {method.id === selectedShippingMethod.id && (
-                                <Check className="h-4 w-4 text-primary" />
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                  )}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Shipping</span>
+                    <span>{formatCurrency(shipping)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Total</span>
+                    <span className="font-medium">{formatCurrency(total)}</span>
                   </div>
                 </div>
 
                 {/* Promo Code */}
                 <div className="mt-4">
-                  <h4 className="text-sm font-medium mb-2 text-foreground">
-                    Promo Code
-                  </h4>
                   <div className="flex gap-2">
                     <Input
                       placeholder="Enter promo code"
                       value={promoCode}
-                      onChange={(e) =>
-                        setPromoCode(e.target.value.toUpperCase())
-                      }
+                      onChange={(e) => setPromoCode(e.target.value)}
                       className="flex-1"
-                      disabled={isApplyingPromo}
                     />
                     <Button
                       variant="outline"
-                      onClick={handleApplyPromo}
+                      onClick={applyPromoCode}
                       disabled={isApplyingPromo || !promoCode.trim()}
                     >
-                      {isApplyingPromo ? "Applying..." : "Apply"}
+                      Apply
                     </Button>
                   </div>
-                  {discount > 0 && (
-                    <div className="mt-2 text-sm text-green-500">
-                      Promo code applied successfully!
+                </div>
+
+                {/* Shipping Method */}
+                <div className="mt-4">
+                  <div
+                    className="flex cursor-pointer items-center justify-between rounded-lg border p-3"
+                    onClick={() =>
+                      setShippingDropdownOpen(!shippingDropdownOpen)
+                    }
+                  >
+                    <div>
+                      <p className="font-medium">
+                        {selectedShippingMethod.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedShippingMethod.description}
+                      </p>
+                    </div>
+                    <ChevronDown
+                      className={cn(
+                        "h-4 w-4 transition-transform",
+                        shippingDropdownOpen && "rotate-180"
+                      )}
+                    />
+                  </div>
+                  {shippingDropdownOpen && (
+                    <div className="mt-2 space-y-2 rounded-lg border p-2">
+                      {shippingMethods.map((method) => (
+                        <div
+                          key={method.id}
+                          className="flex cursor-pointer items-center justify-between rounded-md p-2 hover:bg-muted"
+                          onClick={() => {
+                            setSelectedShippingMethod(method);
+                            setShippingDropdownOpen(false);
+                          }}
+                        >
+                          <div>
+                            <p className="font-medium">{method.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {method.description}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">
+                              {formatCurrency(method.price)}
+                            </span>
+                            {selectedShippingMethod.id === method.id && (
+                              <Check className="h-4 w-4 text-primary" />
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
 
-                {/* Order Summary */}
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span className="text-foreground">
-                      {formatCurrency(subtotal)}
-                    </span>
-                  </div>
-                  {discount > 0 && (
-                    <div className="flex justify-between text-green-500">
-                      <span>Discount</span>
-                      <span>-{formatCurrency(discount)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Shipping</span>
-                    <span className="text-foreground">
-                      {formatCurrency(shipping)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between border-t border-border pt-2 font-medium">
-                    <span className="text-foreground">Total</span>
-                    <span className="text-foreground">
-                      {formatCurrency(total)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Additional Info */}
+                {/* Trust Badges */}
                 <div className="mt-4 space-y-2">
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <RefreshCcw className="h-3.5 w-3.5" />

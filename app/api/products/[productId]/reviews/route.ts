@@ -34,7 +34,7 @@ export async function POST(
 ) {
   try {
     const session = await getSession();
-    if (!session) {
+    if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -49,28 +49,44 @@ export async function POST(
 
     await connectDB();
 
+    // Validate product exists
+    const product = await Product.findById(params.productId);
+    if (!product) {
+      return NextResponse.json({ error: "Product not found" }, { status: 404 });
+    }
+
+    // Check if user has already reviewed this product
+    const existingReview = await Review.findOne({
+      productId: params.productId,
+      userId: session.userId,
+    });
+
+    if (existingReview) {
+      return NextResponse.json(
+        { error: "You have already reviewed this product" },
+        { status: 400 }
+      );
+    }
+
     // Create the review
     const review = await Review.create({
       productId: params.productId,
       userId: session.userId,
       rating,
       content,
-      userName: session.name,
+      userName: session.name || "Anonymous User",
       userAvatar: session.image || "/placeholder.svg",
     });
 
     // Update product rating and review count
-    const product = await Product.findById(params.productId);
-    if (product) {
-      const reviews = await Review.find({ productId: params.productId });
-      const totalRating = reviews.reduce((sum, r) => sum + r.rating, 0);
-      const averageRating = totalRating / reviews.length;
+    const allReviews = await Review.find({ productId: params.productId });
+    const totalRating = allReviews.reduce((sum, r) => sum + r.rating, 0);
+    const averageRating = totalRating / allReviews.length;
 
-      await Product.findByIdAndUpdate(params.productId, {
-        rating: averageRating,
-        reviewCount: reviews.length,
-      });
-    }
+    await Product.findByIdAndUpdate(params.productId, {
+      rating: averageRating,
+      reviewCount: allReviews.length,
+    });
 
     return NextResponse.json(review);
   } catch (error) {

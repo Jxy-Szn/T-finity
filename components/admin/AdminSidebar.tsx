@@ -98,15 +98,15 @@ const AdminSidebar = () => {
                       </Link>
                     </SidebarMenuSubButton>
                   </SidebarMenuSubItem>
-                  <SidebarMenuSubItem>
-                    <SidebarMenuSubButton asChild>
-                      <Link href="/dashboard/products/categories">
-                        <List />
-                        <span>Categories</span>
-                      </Link>
-                    </SidebarMenuSubButton>
-                  </SidebarMenuSubItem>
                 </SidebarMenuSub>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link href="/dashboard/categories">
+                    <Tags />
+                    <span>Categories</span>
+                  </Link>
+                </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>

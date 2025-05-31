@@ -54,7 +54,14 @@ export async function POST(request: Request) {
 
     await connectDB();
     const data = await request.json();
-    const product = await Product.create(data);
+
+    // Create a new product without category
+    const productData = {
+      ...data,
+      category: undefined, // Explicitly set category to undefined
+    };
+
+    const product = await Product.create(productData);
     return NextResponse.json(product, { status: 201 });
   } catch (error) {
     console.error("Error creating product:", error);

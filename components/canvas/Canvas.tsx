@@ -1,11 +1,132 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDesignStore } from "@/lib/store";
 import Image from "next/image";
+import { Canvas as FabricCanvas } from "fabric";
+import { Button } from "@/components/ui/button";
+import { Trash2, Undo, ShoppingCart } from "lucide-react";
+import { useCart } from "@/providers/cart-provider";
+import { toast } from "sonner";
 
 export default function Canvas() {
   const tShirtColor = useDesignStore((state) => state.tShirtColor);
   const isFrontView = useDesignStore((state) => state.isFrontView);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fabricCanvasRef = useRef<FabricCanvas | null>(null);
+  const setDraw = useDesignStore((state) => state.setDraw);
+  const [price, setPrice] = useState(19.99); // Base price for white t-shirt
+  const { addItem } = useCart();
+
+  useEffect(() => {
+    if (canvasRef.current && !fabricCanvasRef.current) {
+      // Initialize Fabric.js canvas
+      const canvas = new FabricCanvas(canvasRef.current, {
+        width: 400,
+        height: 500,
+        backgroundColor: "transparent",
+      });
+
+      // Enable object selection
+      canvas.selection = true;
+
+      // Add event listeners for price updates
+      canvas.on("object:added", () => {
+        updatePrice();
+      });
+
+      canvas.on("object:removed", () => {
+        updatePrice();
+      });
+
+      canvas.on("object:modified", () => {
+        updatePrice();
+      });
+
+      fabricCanvasRef.current = canvas;
+      setDraw(canvas);
+
+      // Cleanup on unmount
+      return () => {
+        canvas.dispose();
+        fabricCanvasRef.current = null;
+        setDraw(null);
+      };
+    }
+  }, [setDraw]);
+
+  // Update price based on canvas state
+  const updatePrice = () => {
+    let newPrice = 19.99; // Base price for white t-shirt
+
+    // Add cost for non-white colors
+    if (tShirtColor !== "#FFFFFF") {
+      newPrice += 2.0;
+    }
+
+    // Add cost for each object on canvas
+    const canvas = fabricCanvasRef.current;
+    if (canvas) {
+      const objectCount = canvas.getObjects().length;
+      newPrice += objectCount * 1.5; // $1.50 per design element
+    }
+
+    setPrice(newPrice);
+  };
+
+  // Handle delete selected objects
+  const handleDelete = () => {
+    const canvas = fabricCanvasRef.current;
+    if (canvas) {
+      const activeObject = canvas.getActiveObject();
+      if (activeObject) {
+        canvas.remove(activeObject);
+        canvas.renderAll();
+        updatePrice();
+      }
+    }
+  };
+
+  // Handle undo
+  const handleUndo = () => {
+    const canvas = fabricCanvasRef.current;
+    if (canvas) {
+      const objects = canvas.getObjects();
+      if (objects.length > 0) {
+        canvas.remove(objects[objects.length - 1]);
+        canvas.renderAll();
+        updatePrice();
+      }
+    }
+  };
+
+  // Handle add to cart
+  const handleAddToCart = () => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas) return;
+
+    // Convert canvas to data URL
+    const dataURL = canvas.toDataURL({
+      format: "png",
+      quality: 1,
+      multiplier: 1,
+    });
+
+    // Create a unique ID for the cart item
+    const id = `custom-tshirt-${Date.now()}`;
+
+    // Add to cart
+    addItem({
+      id,
+      name: "Custom T-Shirt Design",
+      price: price,
+      color: tShirtColor,
+      variant: isFrontView ? "Front" : "Back",
+      quantity: 1,
+      image: dataURL,
+    });
+
+    toast.success("Added to cart!");
+  };
 
   // Map color codes to t-shirt image paths
   const getTShirtImage = (color: string, isFront: boolean) => {
@@ -70,6 +191,40 @@ export default function Canvas() {
 
   return (
     <div className="relative w-full h-full flex items-center justify-center">
+      {/* Canvas Controls */}
+      <div className="absolute top-4 left-4 flex gap-2 z-10">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleDelete}
+          title="Delete selected"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleUndo}
+          title="Undo last action"
+        >
+          <Undo className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="default"
+          size="sm"
+          onClick={handleAddToCart}
+          className="ml-2"
+        >
+          <ShoppingCart className="h-4 w-4 mr-2" />
+          Add to Cart
+        </Button>
+      </div>
+
+      {/* Price Display */}
+      <div className="absolute top-4 right-4 bg-background/95 backdrop-blur p-2 rounded-lg shadow-sm">
+        <p className="text-lg font-semibold">${price.toFixed(2)}</p>
+      </div>
+
       <div className="relative w-[400px] h-[500px]">
         <Image
           src={getTShirtImage(tShirtColor, isFrontView)}
@@ -77,6 +232,10 @@ export default function Canvas() {
           fill
           className="object-contain"
           priority
+        />
+        <canvas
+          ref={canvasRef}
+          className="absolute top-0 left-0 w-full h-full"
         />
       </div>
     </div>

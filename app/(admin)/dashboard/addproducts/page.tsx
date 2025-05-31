@@ -43,8 +43,6 @@ const formSchema = z.object({
     .min(0, "Original price must be greater than 0")
     .optional(),
   images: z.array(z.string()).min(1, "At least one image is required"),
-  category: z.string().min(1, "Category is required"),
-  subcategory: z.string().optional(),
   colors: z.array(
     z.object({
       name: z.string(),
@@ -58,8 +56,6 @@ const formSchema = z.object({
     })
   ),
   stock: z.number().min(0, "Stock must be greater than or equal to 0"),
-  featured: z.boolean().default(false),
-  trending: z.boolean().default(false),
   freeShipping: z.boolean().default(false),
   warranty: z
     .enum([
@@ -134,13 +130,9 @@ export default function AddProductsPage() {
       price: 0,
       originalPrice: undefined,
       images: [],
-      category: "",
-      subcategory: "",
       colors: [],
       sizes: [],
       stock: 0,
-      featured: false,
-      trending: false,
       freeShipping: false,
       warranty: "none",
       quality: "standard",
@@ -178,12 +170,13 @@ export default function AddProductsPage() {
     const colorExists = currentColors.some((c) => c.name === color.name);
 
     if (colorExists) {
-      form.setValue(
-        "colors",
-        currentColors.filter((c) => c.name !== color.name)
-      );
+      const newColors = currentColors.filter((c) => c.name !== color.name);
+      form.setValue("colors", newColors);
+      setSelectedColors(selectedColors.filter((c) => c !== color.name));
     } else {
-      form.setValue("colors", [...currentColors, color]);
+      const newColors = [...currentColors, color];
+      form.setValue("colors", newColors);
+      setSelectedColors([...selectedColors, color.name]);
     }
   };
 
@@ -192,12 +185,13 @@ export default function AddProductsPage() {
     const sizeExists = currentSizes.some((s) => s.name === size.name);
 
     if (sizeExists) {
-      form.setValue(
-        "sizes",
-        currentSizes.filter((s) => s.name !== size.name)
-      );
+      const newSizes = currentSizes.filter((s) => s.name !== size.name);
+      form.setValue("sizes", newSizes);
+      setSelectedSizes(selectedSizes.filter((s) => s !== size.name));
     } else {
-      form.setValue("sizes", [...currentSizes, size]);
+      const newSizes = [...currentSizes, size];
+      form.setValue("sizes", newSizes);
+      setSelectedSizes([...selectedSizes, size.name]);
     }
   };
 
@@ -264,69 +258,93 @@ export default function AddProductsPage() {
                       </FormItem>
                     )}
                   />
+                </TabsContent>
 
+                <TabsContent value="pricing" className="space-y-4">
                   <FormField
                     control={form.control}
-                    name="category"
+                    name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Category</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a category" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="men">Men</SelectItem>
-                            <SelectItem value="women">Women</SelectItem>
-                            <SelectItem value="children">Children</SelectItem>
-                            <SelectItem value="summer">Summer</SelectItem>
-                            <SelectItem value="sales">Sales</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="subcategory"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Subcategory</FormLabel>
+                        <FormLabel>Price</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter subcategory" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="freeShipping"
-                    render={({ field }) => (
-                      <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                          <FormLabel>Free Shipping</FormLabel>
-                          <FormDescription>
-                            Offer free shipping for this product
-                          </FormDescription>
-                        </div>
-                        <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
+                          <Input
+                            type="number"
+                            placeholder="Enter price"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(parseFloat(e.target.value))
+                            }
                           />
                         </FormControl>
+                        <FormMessage />
                       </FormItem>
                     )}
                   />
+
+                  <FormField
+                    control={form.control}
+                    name="originalPrice"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Original Price (Optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Enter original price"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(
+                                e.target.value
+                                  ? parseFloat(e.target.value)
+                                  : undefined
+                              )
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="stock"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Stock</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Enter stock quantity"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(parseInt(e.target.value))
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex items-center space-x-2">
+                    <FormField
+                      control={form.control}
+                      name="freeShipping"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel>Free Shipping</FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <FormField
                     control={form.control}
@@ -340,7 +358,7 @@ export default function AddProductsPage() {
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select warranty period" />
+                              <SelectValue placeholder="Select warranty" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -363,14 +381,14 @@ export default function AddProductsPage() {
                     name="quality"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Quality Level</FormLabel>
+                        <FormLabel>Quality</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}
                         >
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select quality level" />
+                              <SelectValue placeholder="Select quality" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -383,117 +401,6 @@ export default function AddProductsPage() {
                       </FormItem>
                     )}
                   />
-                </TabsContent>
-
-                <TabsContent value="pricing" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="price"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Price</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="0.00"
-                              {...field}
-                              onChange={(e) =>
-                                field.onChange(Number(e.target.value))
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="originalPrice"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Original Price</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="0.00"
-                              {...field}
-                              onChange={(e) =>
-                                field.onChange(Number(e.target.value))
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="stock"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Stock</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="0"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(Number(e.target.value))
-                            }
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="featured"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel>Featured Product</FormLabel>
-                            <FormDescription>
-                              Show this product in featured section
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="trending"
-                      render={({ field }) => (
-                        <FormItem className="flex items-center justify-between rounded-lg border p-4">
-                          <div className="space-y-0.5">
-                            <FormLabel>Trending</FormLabel>
-                            <FormDescription>
-                              Mark this product as trending
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
-                          </FormControl>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
                 </TabsContent>
 
                 <TabsContent value="variants" className="space-y-4">
@@ -509,7 +416,7 @@ export default function AddProductsPage() {
                             onChange={field.onChange}
                             onRemove={(url) =>
                               field.onChange(
-                                field.value.filter((current) => current !== url)
+                                field.value.filter((value) => value !== url)
                               )
                             }
                           />
@@ -521,46 +428,27 @@ export default function AddProductsPage() {
 
                   <div className="space-y-4">
                     <FormLabel>Colors</FormLabel>
-                    <div className="grid grid-cols-8 gap-1">
+                    <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
                       {predefinedColors.map((color) => (
                         <div
                           key={color.name}
-                          className="flex flex-col items-center gap-0.5"
+                          className={cn(
+                            "relative h-8 w-8 rounded-md cursor-pointer border-2",
+                            selectedColors.includes(color.name)
+                              ? "border-primary"
+                              : "border-transparent"
+                          )}
+                          onClick={() => toggleColor(color)}
                         >
-                          <button
-                            type="button"
-                            className={cn(
-                              "h-6 w-6 rounded-full border border-input flex items-center justify-center transition-all",
-                              form
-                                .watch("colors")
-                                .some((c) => c.name === color.name) &&
-                                "ring-2 ring-primary scale-105"
-                            )}
+                          <div
+                            className="w-full h-full rounded-md"
                             style={{ backgroundColor: color.value }}
-                            onClick={() => toggleColor(color)}
-                          >
-                            {form
-                              .watch("colors")
-                              .some((c) => c.name === color.name) && (
-                              <Check
-                                className={cn(
-                                  "h-3 w-3",
-                                  [
-                                    "White",
-                                    "Yellow",
-                                    "Beige",
-                                    "Mint",
-                                    "Peach",
-                                  ].includes(color.name)
-                                    ? "text-black"
-                                    : "text-white"
-                                )}
-                              />
-                            )}
-                          </button>
-                          <span className="text-[10px] leading-tight">
-                            {color.name}
-                          </span>
+                          />
+                          {selectedColors.includes(color.name) && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                              <Check className="h-4 w-4 text-white" />
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -570,42 +458,36 @@ export default function AddProductsPage() {
                     <FormLabel>Sizes</FormLabel>
                     <div className="flex flex-wrap gap-2">
                       {predefinedSizes.map((size) => (
-                        <Button
+                        <div
                           key={size.name}
-                          type="button"
-                          variant={
-                            form
-                              .watch("sizes")
-                              .some((s) => s.name === size.name)
-                              ? "default"
-                              : "outline"
-                          }
+                          className={cn(
+                            "relative h-8 w-8 rounded-md cursor-pointer border-2 flex items-center justify-center bg-muted",
+                            selectedSizes.includes(size.name)
+                              ? "border-primary"
+                              : "border-transparent"
+                          )}
                           onClick={() => toggleSize(size)}
-                          className="min-w-[60px]"
                         >
-                          {size.value}
-                        </Button>
+                          <span className="text-sm font-medium">
+                            {size.value}
+                          </span>
+                          {selectedSizes.includes(size.name) && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                              <Check className="h-4 w-4 text-white" />
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>
 
                   <div className="space-y-4">
                     <FormLabel>Tags</FormLabel>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Add a tag"
-                        value={newTag}
-                        onChange={(e) => setNewTag(e.target.value)}
-                      />
-                      <Button type="button" onClick={addTag}>
-                        Add Tag
-                      </Button>
-                    </div>
                     <div className="flex flex-wrap gap-2">
-                      {form.watch("tags").map((tag, index) => (
+                      {form.getValues("tags").map((tag, index) => (
                         <div
                           key={index}
-                          className="flex items-center gap-2 rounded-full bg-secondary px-3 py-1"
+                          className="flex items-center gap-1 bg-muted px-2 py-1 rounded-md"
                         >
                           <span>{tag}</span>
                           <button
@@ -617,6 +499,22 @@ export default function AddProductsPage() {
                           </button>
                         </div>
                       ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <Input
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        placeholder="Add a tag"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addTag();
+                          }
+                        }}
+                      />
+                      <Button type="button" onClick={addTag}>
+                        Add
+                      </Button>
                     </div>
                   </div>
                 </TabsContent>

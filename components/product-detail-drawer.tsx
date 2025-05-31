@@ -268,7 +268,7 @@ export function ProductDetailDrawer({
                     <div className="grid grid-cols-8 gap-1">
                       {product.colors.map((color) => (
                         <button
-                          key={color.value}
+                          key={`${color.name}-${color.value}`}
                           onClick={() => setSelectedColor(color.value)}
                           className={cn(
                             "relative h-6 w-8 rounded-md border transition-all",

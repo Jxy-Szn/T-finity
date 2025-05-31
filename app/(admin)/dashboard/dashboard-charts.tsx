@@ -19,7 +19,6 @@ import {
 
 interface DashboardChartsProps {
   revenueData: Array<{ date: string; revenue: number }>;
-  categoryChartData: Array<{ name: string; value: number }>;
   ratingChartData: Array<{ rating: string; count: number }>;
   averageRating: number;
   totalReviews: number;
@@ -27,7 +26,6 @@ interface DashboardChartsProps {
 
 export default function DashboardCharts({
   revenueData,
-  categoryChartData,
   ratingChartData,
   averageRating,
   totalReviews,
@@ -35,7 +33,7 @@ export default function DashboardCharts({
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+        <Card className="col-span-7">
           <CardHeader>
             <CardTitle>Revenue Overview</CardTitle>
           </CardHeader>
@@ -51,36 +49,8 @@ export default function DashboardCharts({
             </ResponsiveContainer>
           </CardContent>
         </Card>
-        <Card className="col-span-3">
-          <CardHeader>
-            <CardTitle>Category Distribution</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={350}>
-              <PieChart>
-                <Pie
-                  data={categoryChartData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={80}
-                  fill="#8884d8"
-                  label
-                >
-                  {categoryChartData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={`hsl(${index * 45}, 70%, 50%)`}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
       </div>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
           <CardHeader>

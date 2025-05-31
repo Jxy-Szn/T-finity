@@ -35,18 +35,63 @@ async function getDashboardData() {
   try {
     await connectToDatabase();
 
-    const [totalCustomers, totalProducts, products, users] = await Promise.all([
-      User.countDocuments(),
-      Product.countDocuments(),
-      Product.find().sort({ createdAt: -1 }).limit(7),
-      User.find().sort({ createdAt: -1 }).limit(7),
-    ]);
+    // Define the Order model if it doesn't exist
+    const Order =
+      mongoose.models.Order ||
+      mongoose.model(
+        "Order",
+        new mongoose.Schema({
+          userId: String,
+          items: [
+            {
+              id: String,
+              name: String,
+              price: Number,
+              quantity: Number,
+              image: String,
+              color: String,
+              variant: String,
+            },
+          ],
+          shipping: {
+            id: String,
+            name: String,
+            price: Number,
+          },
+          total: Number,
+          customerInfo: {
+            email: String,
+            name: String,
+            address: String,
+            city: String,
+            state: String,
+            zipCode: String,
+            phone: String,
+          },
+          status: String,
+          paymentStatus: String,
+          createdAt: { type: Date, default: Date.now },
+          updatedAt: { type: Date, default: Date.now },
+        })
+      );
 
-    // Calculate total revenue from products
-    const totalRevenue = products.reduce(
-      (sum, product) => sum + (product.price || 0),
+    const [totalCustomers, totalProducts, products, users, orders] =
+      await Promise.all([
+        User.countDocuments(),
+        Product.countDocuments(),
+        Product.find().sort({ createdAt: -1 }).limit(7),
+        User.find().sort({ createdAt: -1 }).limit(7),
+        Order.find().sort({ createdAt: -1 }).limit(7),
+      ]);
+
+    // Calculate total revenue from orders
+    const totalRevenue = orders.reduce(
+      (sum, order) => sum + (order.total || 0),
       0
     );
+
+    // Calculate total orders
+    const totalOrders = orders.length;
 
     // Calculate average rating
     const totalRating = products.reduce(
@@ -62,24 +107,10 @@ async function getDashboardData() {
     );
 
     // Prepare revenue data for the last 7 days
-    const revenueData = products.map((product) => ({
-      date: new Date(product.createdAt).toLocaleDateString(),
-      revenue: product.price || 0,
+    const revenueData = orders.map((order) => ({
+      date: new Date(order.createdAt).toLocaleDateString(),
+      revenue: order.total || 0,
     }));
-
-    // Prepare category distribution data
-    const categoryData = products.reduce((acc, product) => {
-      const category = product.category || "Uncategorized";
-      acc[category] = (acc[category] || 0) + 1;
-      return acc;
-    }, {});
-
-    const categoryChartData = Object.entries(categoryData).map(
-      ([name, value]) => ({
-        name,
-        value,
-      })
-    );
 
     // Prepare rating distribution data
     const ratingData = products.reduce((acc, product) => {
@@ -91,19 +122,18 @@ async function getDashboardData() {
     const ratingChartData = Object.entries(ratingData).map(
       ([rating, count]) => ({
         rating: `Rating ${rating}`,
-        count,
+        count: Number(count),
       })
     );
 
     return {
       totalCustomers,
       totalRevenue,
-      totalOrders: totalProducts, // Using products as a proxy for orders
+      totalOrders,
       totalProducts,
       averageRating,
       totalReviews,
       revenueData,
-      categoryChartData,
       ratingChartData,
     };
   } catch (error) {
@@ -122,7 +152,6 @@ export default async function DashboardPage() {
       averageRating,
       totalReviews,
       revenueData,
-      categoryChartData,
       ratingChartData,
     } = await getDashboardData();
 
@@ -181,7 +210,6 @@ export default async function DashboardPage() {
         </div>
         <DashboardCharts
           revenueData={revenueData}
-          categoryChartData={categoryChartData}
           ratingChartData={ratingChartData}
           averageRating={averageRating}
           totalReviews={totalReviews}

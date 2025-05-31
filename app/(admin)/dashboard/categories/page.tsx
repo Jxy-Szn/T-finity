@@ -19,19 +19,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search, Trash2, Filter } from "lucide-react";
+import { Search, Filter } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 interface Product {
   _id: string;
@@ -44,12 +34,11 @@ interface Product {
   onSale: boolean;
 }
 
-export default function ProductsPage() {
+export default function CategoriesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   useEffect(() => {
     fetchProducts();
@@ -69,37 +58,6 @@ export default function ProductsPage() {
       toast.error("Failed to fetch products");
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleDelete = async (product: Product) => {
-    setProductToDelete(product);
-  };
-
-  const confirmDelete = async () => {
-    if (!productToDelete) return;
-
-    try {
-      const response = await fetch(`/api/products/${productToDelete._id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to delete product");
-      }
-
-      setProducts(
-        products.filter((product) => product._id !== productToDelete._id)
-      );
-      toast.success("Product deleted successfully");
-    } catch (error) {
-      console.error("Error deleting product:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to delete product"
-      );
-    } finally {
-      setProductToDelete(null);
     }
   };
 
@@ -220,46 +178,10 @@ export default function ProductsPage() {
                 </div>
                 <CardDescription>Stock: {product.stock} units</CardDescription>
               </CardContent>
-              <CardFooter className="p-4 pt-0">
-                <Button
-                  variant="destructive"
-                  className="w-full"
-                  onClick={() => handleDelete(product)}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Product
-                </Button>
-              </CardFooter>
             </Card>
           ))}
         </div>
       )}
-
-      <AlertDialog
-        open={!!productToDelete}
-        onOpenChange={() => setProductToDelete(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              product
-              {productToDelete && ` "${productToDelete.name}"`} and remove it
-              from the database.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
