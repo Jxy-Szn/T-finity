@@ -26,7 +26,7 @@ const CanvasNavBar = () => {
             className="text-3xl font-bold text-foreground tracking-tight select-none"
             style={{ fontFamily: "Pacifico, cursive" }}
           >
-            Tifinity
+            T-finity
           </span>
         </div>
       </Link>

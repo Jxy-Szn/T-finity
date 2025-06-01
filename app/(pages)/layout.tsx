@@ -23,7 +23,6 @@ export default function PagesLayout({
         <Navbar />
         <main>{children}</main>
         <Footer />
-        <CartSidebar />
         <Toaster
           position="top-center"
           duration={3000}

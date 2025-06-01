@@ -7,6 +7,8 @@ interface User {
   name: string;
   role: "admin" | "customer";
   image?: string;
+  phone?: string;
+  address?: string;
 }
 
 interface AuthState {

@@ -115,19 +115,15 @@ const Navbar = () => {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push("/profile")}>
+              <DropdownMenuItem onClick={() => router.push("/user/profile")}>
                 <User className="mr-2 h-4 w-4" />
                 <span>Profile</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/orders")}>
+              <DropdownMenuItem onClick={() => router.push("/user/orders")}>
                 <Package className="mr-2 h-4 w-4" />
                 <span>Orders</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/payment")}>
-                <CreditCard className="mr-2 h-4 w-4" />
-                <span>Payment Methods</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/settings")}>
+              <DropdownMenuItem onClick={() => router.push("/user/settings")}>
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>

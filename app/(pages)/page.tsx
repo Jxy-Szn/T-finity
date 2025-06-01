@@ -9,7 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Contact } from "../components/Contact";
-
+import { Category } from "@/components/category";
 interface Product {
   _id: string;
   name: string;
@@ -196,6 +196,7 @@ const Page = () => {
 
       {/* Contact Section */}
       <Contact />
+      <Category />
     </div>
   );
 };
