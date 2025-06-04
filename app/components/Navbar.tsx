@@ -28,6 +28,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { CartButton } from "@/components/cart-button";
+import { WishlistButton } from "@/components/wishlist-button";
 
 // Ensure Pacifico font is loaded (Google Fonts)
 if (typeof window !== "undefined") {
@@ -47,13 +49,17 @@ const Navbar = () => {
   const router = useRouter();
 
   useEffect(() => {
-    // Check auth status when component mounts
-    checkAuth();
+    console.log("Navbar mounted, checking auth...");
+    checkAuth().then((userData) => {
+      console.log("Auth check result:", userData);
+    });
   }, [checkAuth]);
 
   const handleLogout = async () => {
     try {
+      console.log("Logging out...");
       await logout();
+      console.log("Logout successful");
     } catch (error) {
       console.error("Logout failed:", error);
       toast.error("Failed to logout. Please try again.");
@@ -63,6 +69,8 @@ const Navbar = () => {
   const handleSupportClick = () => {
     window.location.href = "mailto:byronjason902@gmail.com";
   };
+
+  console.log("Navbar render - user:", user, "loading:", loading);
 
   return (
     <nav className="bg-background px-4 py-2 flex items-center justify-between top-0 z-50 sticky">
@@ -143,14 +151,10 @@ const Navbar = () => {
         )}
 
         {/* Wishlist */}
-        <div className="flex items-center space-x-1 cursor-pointer">
-          <Heart size={24} />
-        </div>
+        <WishlistButton />
 
         {/* Cart */}
-        <div className="relative flex items-center space-x-1 cursor-pointer pr-10">
-          <ShoppingCart size={24} />
-        </div>
+        <CartButton />
       </div>
     </nav>
   );

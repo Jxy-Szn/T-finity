@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatCurrency } from "@/lib/utils";
+import { useCart } from "@/providers/cart-provider";
+import { ShoppingCart } from "lucide-react";
+import { toast } from "sonner";
 
 interface Product {
   _id: string;
@@ -18,33 +21,67 @@ interface Product {
   discount?: number;
 }
 
+interface CategorySettings {
+  headerText: string;
+  headerColor: string;
+}
+
 export function Category() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState<CategorySettings>({
+    headerText: "Limited Stock Deals",
+    headerColor: "bg-purple-500",
+  });
+  const { addItem } = useCart();
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch("/api/products?limit=6&sort=-createdAt");
-        if (!response.ok) throw new Error("Failed to fetch products");
-        const data = await response.json();
-        setProducts(data.products);
+        // Fetch settings
+        const settingsResponse = await fetch("/api/category-settings");
+        if (settingsResponse.ok) {
+          const settingsData = await settingsResponse.json();
+          setSettings(settingsData.settings);
+        }
+
+        // Fetch products
+        const productsResponse = await fetch(
+          "/api/products?limit=6&sort=-createdAt"
+        );
+        if (!productsResponse.ok) throw new Error("Failed to fetch products");
+        const productsData = await productsResponse.json();
+        setProducts(productsData.products);
       } catch (error) {
-        console.error("Error fetching products:", error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchData();
   }, []);
+
+  const handleAddToCart = (product: Product) => {
+    addItem({
+      id: product._id,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      color: "",
+      variant: "",
+      quantity: 1,
+      image: product.images[0] || "/placeholder.png",
+    });
+    toast.success("Added to cart");
+  };
 
   return (
     <section className="w-full">
-      <div className="bg-purple-500 p-4 rounded-t-xl">
+      <div className={`${settings.headerColor} p-4 rounded-t-xl`}>
         <div className="flex justify-between items-center">
           <h2 className="text-lg font-semibold text-white">
-            Limited Stock Deals
+            {settings.headerText}
           </h2>
           <Link href="/deals">
             <Button
@@ -100,15 +137,29 @@ export function Category() {
                   <h3 className="text-sm font-medium truncate mb-1 text-foreground">
                     {product.name}
                   </h3>
-                  <div className="flex items-center gap-2">
-                    <p className="text-base font-semibold text-foreground">
-                      {formatCurrency(product.price)}
-                    </p>
-                    {product.originalPrice && (
-                      <p className="text-xs text-muted-foreground line-through">
-                        {formatCurrency(product.originalPrice)}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <p className="text-base font-semibold text-foreground">
+                        {formatCurrency(product.price)}
                       </p>
-                    )}
+                      {product.originalPrice && (
+                        <p className="text-xs text-muted-foreground line-through">
+                          {formatCurrency(product.originalPrice)}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddToCart(product);
+                      }}
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+                    >
+                      <ShoppingCart className="h-4 w-4" />
+                      <span className="sr-only">Add to cart</span>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

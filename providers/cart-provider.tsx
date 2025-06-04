@@ -76,7 +76,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [discount, setDiscount] = useState(0);
   const [shippingMethods] = useState<ShippingMethod[]>(defaultShippingMethods);
   const [selectedShippingMethod, setSelectedShippingMethod] =
-    useState<ShippingMethod>(defaultShippingMethods[0]);
+    useState<ShippingMethod>(() => {
+      // Try to load from localStorage
+      if (typeof window !== "undefined") {
+        const saved = localStorage.getItem("selectedShippingMethod");
+        return saved ? JSON.parse(saved) : defaultShippingMethods[0];
+      }
+      return defaultShippingMethods[0];
+    });
+
+  // Save shipping method to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem(
+      "selectedShippingMethod",
+      JSON.stringify(selectedShippingMethod)
+    );
+  }, [selectedShippingMethod]);
 
   // Calculate totals
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
@@ -101,22 +116,39 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   // Load cart from localStorage on client
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const savedCart = localStorage.getItem("cart");
+    console.log("Raw cart data from localStorage:", savedCart);
+
     if (savedCart) {
       try {
         const parsedCart = JSON.parse(savedCart);
-        console.log("Loading cart from localStorage:", parsedCart);
-        setItems(parsedCart);
+        console.log("Parsed cart from localStorage:", parsedCart);
+        if (Array.isArray(parsedCart) && parsedCart.length > 0) {
+          console.log("Setting cart items:", parsedCart);
+          setItems(parsedCart);
+        } else {
+          console.log("Cart is empty or invalid");
+        }
       } catch (e) {
         console.error("Failed to parse cart from localStorage:", e);
       }
+    } else {
+      console.log("No cart data found in localStorage");
     }
   }, []);
 
   // Save cart to localStorage when it changes
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     console.log("Saving cart to localStorage:", items);
-    localStorage.setItem("cart", JSON.stringify(items));
+    if (items.length > 0) {
+      localStorage.setItem("cart", JSON.stringify(items));
+    } else {
+      localStorage.removeItem("cart");
+    }
   }, [items]);
 
   const addItem = (item: CartItem) => {

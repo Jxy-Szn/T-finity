@@ -53,7 +53,8 @@ export function CartSidebar() {
       if (
         isOpen &&
         sidebarRef.current &&
-        !sidebarRef.current.contains(event.target as Node)
+        !sidebarRef.current.contains(event.target as Node) &&
+        !(event.target as HTMLElement).closest(".cart-content")
       ) {
         closeCart();
       }
@@ -86,7 +87,7 @@ export function CartSidebar() {
     >
       <div
         ref={sidebarRef}
-        className="absolute inset-y-0 right-0 flex h-full w-full max-w-md flex-col bg-background text-foreground shadow-xl transition-transform duration-500 ease-in-out"
+        className="absolute inset-y-0 right-0 flex h-full w-full max-w-md flex-col bg-background text-foreground shadow-xl transition-transform duration-500 ease-in-out cart-content"
         style={{ transform: isOpen ? "translateX(0)" : "translateX(100%)" }}
       >
         <div className="flex items-center justify-between p-4 border-b border-border">
@@ -105,7 +106,7 @@ export function CartSidebar() {
                 size="icon"
                 onClick={handleClearCart}
                 className={cn(
-                  "h-8 w-8 rounded-full",
+                  "h-8 w-8 rounded-full cursor-pointer",
                   showClearConfirm
                     ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -123,7 +124,7 @@ export function CartSidebar() {
             variant="ghost"
             size="icon"
             onClick={closeCart}
-            className="text-muted-foreground hover:text-foreground hover:bg-muted"
+            className="text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
           >
             <X className="h-5 w-5" />
             <span className="sr-only">Close</span>
@@ -143,7 +144,7 @@ export function CartSidebar() {
               <p className="mt-2 text-sm text-muted-foreground">
                 Add items to your cart to see them here
               </p>
-              <Button onClick={closeCart} className="mt-4">
+              <Button onClick={closeCart} className="mt-4 cursor-pointer">
                 Continue Shopping
               </Button>
             </div>
@@ -212,7 +213,7 @@ export function CartSidebar() {
                         variant="ghost"
                         size="icon"
                         onClick={() => removeItem(item.id)}
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -222,7 +223,7 @@ export function CartSidebar() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 rounded-none text-muted-foreground hover:text-foreground hover:bg-transparent"
+                          className="h-8 w-8 rounded-none text-muted-foreground hover:text-foreground hover:bg-transparent cursor-pointer"
                           onClick={() =>
                             updateQuantity(item.id, item.quantity - 1)
                           }
@@ -237,7 +238,7 @@ export function CartSidebar() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 rounded-none text-muted-foreground hover:text-foreground hover:bg-transparent"
+                          className="h-8 w-8 rounded-none text-muted-foreground hover:text-foreground hover:bg-transparent cursor-pointer"
                           onClick={() =>
                             updateQuantity(item.id, item.quantity + 1)
                           }
@@ -300,6 +301,7 @@ export function CartSidebar() {
                       variant="outline"
                       onClick={applyPromoCode}
                       disabled={isApplyingPromo || !promoCode.trim()}
+                      className="cursor-pointer"
                     >
                       Apply
                     </Button>
@@ -378,7 +380,7 @@ export function CartSidebar() {
 
                 {/* Checkout Button */}
                 <Button
-                  className="mt-4 w-full gap-2"
+                  className="mt-4 w-full gap-2 cursor-pointer"
                   onClick={() => {
                     closeCart();
                     router.push("/checkout");

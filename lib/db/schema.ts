@@ -7,6 +7,9 @@ export interface IUser {
   password: string;
   role: "admin" | "customer";
   isVerified: boolean;
+  image?: string;
+  phone?: string;
+  address?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -96,6 +99,15 @@ const userSchema = new Schema<IUser>(
     isVerified: {
       type: Boolean,
       default: true,
+    },
+    image: {
+      type: String,
+    },
+    phone: {
+      type: String,
+    },
+    address: {
+      type: String,
     },
   },
   {

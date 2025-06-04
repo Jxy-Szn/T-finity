@@ -27,7 +27,7 @@ type RouteConfig = ProtectedRouteConfig | AuthRedirectRouteConfig;
 const protectedRoutes: Record<string, RouteConfig> = {
   "/dashboard": {
     requiresAuth: true,
-    allowedRoles: ["admin", "customer"],
+    allowedRoles: ["admin"],
   },
   "/signin": {
     requiresAuth: false,
@@ -35,7 +35,7 @@ const protectedRoutes: Record<string, RouteConfig> = {
   },
   "/payments/checkout": {
     requiresAuth: true,
-    allowedRoles: ["admin", "customer"],
+    allowedRoles: ["customer"],
   },
 };
 
@@ -70,13 +70,19 @@ export async function middleware(request: NextRequest) {
         // Verify token using jose
         const { payload } = await jwtVerify(token, secret);
         const decoded = payload as {
-          userId: string;
+          userId: string | { buffer: { [key: string]: number } };
           email: string;
           role: "admin" | "customer";
         };
 
+        // Convert userId to string if it's a buffer
+        const userId =
+          typeof decoded.userId === "object" && "buffer" in decoded.userId
+            ? Buffer.from(Object.values(decoded.userId.buffer)).toString("hex")
+            : decoded.userId;
+
         console.log("[Middleware] Token verified:", {
-          userId: decoded.userId,
+          userId,
           email: decoded.email,
           role: decoded.role,
         });
@@ -107,13 +113,19 @@ export async function middleware(request: NextRequest) {
         // Verify token using jose
         const { payload } = await jwtVerify(token, secret);
         const decoded = payload as {
-          userId: string;
+          userId: string | { buffer: { [key: string]: number } };
           email: string;
           role: "admin" | "customer";
         };
 
+        // Convert userId to string if it's a buffer
+        const userId =
+          typeof decoded.userId === "object" && "buffer" in decoded.userId
+            ? Buffer.from(Object.values(decoded.userId.buffer)).toString("hex")
+            : decoded.userId;
+
         console.log("[Middleware] Authenticated user on signin page:", {
-          userId: decoded.userId,
+          userId,
           email: decoded.email,
           role: decoded.role,
         });

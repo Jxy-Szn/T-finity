@@ -15,6 +15,7 @@ interface AuthState {
   user: User | null;
   loading: boolean;
   error: string | null;
+  lastCheck: number;
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -23,34 +24,76 @@ interface AuthState {
   updateUser: (userData: Partial<User>) => Promise<void>;
 }
 
+const AUTH_CHECK_INTERVAL = 60000; // 1 minute
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
       loading: false,
       error: null,
+      lastCheck: 0,
 
       setUser: (user) => set({ user }),
       setLoading: (loading) => set({ loading }),
       setError: (error) => set({ error }),
 
       checkAuth: async () => {
+        const { lastCheck, loading } = get();
+        const now = Date.now();
+
+        // Don't check if we've checked recently or if already loading
+        if (now - lastCheck < AUTH_CHECK_INTERVAL || loading) {
+          return get().user;
+        }
+
         try {
           set({ loading: true, error: null });
+          console.log("Checking auth status...");
+
           const response = await fetch("/api/auth/me");
+          console.log("Auth check response status:", response.status);
+
           if (response.ok) {
             const data = await response.json();
-            const userData = data.user;
-            set({ user: userData, loading: false, error: null });
+            console.log("Auth check response data:", data);
+
+            if (!data.user) {
+              console.error("No user data in response");
+              set({
+                user: null,
+                loading: false,
+                error: "No user data",
+                lastCheck: now,
+              });
+              return null;
+            }
+
+            const userData = {
+              ...data.user,
+              id: data.user.id || data.user._id?.toString(),
+            };
+
+            console.log("Setting user data:", userData);
+            set({
+              user: userData,
+              loading: false,
+              error: null,
+              lastCheck: now,
+            });
             return userData;
           }
-          set({ user: null, loading: false, error: null });
+
+          console.log("Auth check failed, clearing user data");
+          set({ user: null, loading: false, error: null, lastCheck: now });
           return null;
         } catch (error) {
+          console.error("Auth check error:", error);
           set({
             user: null,
             loading: false,
             error: "Failed to check authentication status",
+            lastCheck: now,
           });
           return null;
         }
@@ -71,7 +114,7 @@ export const useAuthStore = create<AuthState>()(
             throw new Error("Logout failed");
           }
 
-          set({ user: null, loading: false, error: null });
+          set({ user: null, loading: false, error: null, lastCheck: 0 });
           window.location.href = "/"; // Force a full page reload to clear all state
         } catch (error) {
           console.error("Logout error:", error);

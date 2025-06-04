@@ -5,11 +5,7 @@ import { MongoClient, ObjectId } from "mongodb";
 const MONGODB_URI = process.env.MONGODB_URI!;
 
 interface SessionPayload {
-  userId: {
-    buffer: {
-      [key: string]: number;
-    };
-  };
+  userId: string;
   email: string;
   role: string;
 }
@@ -24,13 +20,12 @@ export async function GET() {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // Convert Buffer to ObjectId
-    const userIdBuffer = Buffer.from(Object.values(session.userId.buffer));
-    const userId = new ObjectId(userIdBuffer);
-
     // Connect to MongoDB
     client = await MongoClient.connect(MONGODB_URI);
     const db = client.db();
+
+    // Convert hex string to ObjectId
+    const userId = new ObjectId(session.userId);
 
     // Get complete user data from database
     const user = await db.collection("users").findOne({ _id: userId });
@@ -41,7 +36,7 @@ export async function GET() {
 
     // Return user data without sensitive fields
     const userResponse = {
-      id: user._id,
+      id: user._id.toString(),
       email: user.email,
       name: user.name,
       role: user.role,

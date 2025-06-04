@@ -10,6 +10,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Contact } from "../components/Contact";
 import { Category } from "@/components/category";
+import { CartSidebar } from "@/components/cart-sidebar";
 interface Product {
   _id: string;
   name: string;
@@ -127,51 +128,16 @@ const Page = () => {
 
   return (
     <div className="min-h-screen">
+      <CartSidebar />
       <Hero />
 
       {/* Categories Section */}
-      <div className="container mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold mb-6">Shop by Category</h2>
-        {categoriesLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {[...Array(4)].map((_, index) => (
-              <div
-                key={`category-skeleton-${index}`}
-                className="aspect-video bg-muted rounded-lg animate-pulse"
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {categories.map((category) => (
-              <Link
-                key={category._id}
-                href={`/category/${category.slug}`}
-                className="group relative aspect-video overflow-hidden rounded-lg"
-              >
-                <Image
-                  src={category.image}
-                  alt={category.name}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-black/40 transition-opacity duration-300 group-hover:bg-black/50" />
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center text-white">
-                  <h3 className="text-xl font-semibold mb-2">
-                    {category.name}
-                  </h3>
-                  <p className="text-sm opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                    {category.description}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
+      <div className="mt-12">
+        <Category />
       </div>
 
       {/* Products Section */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 mt-12">
         <h2 className="text-2xl font-bold mb-6">Our Products</h2>
 
         {error && (
@@ -196,7 +162,6 @@ const Page = () => {
 
       {/* Contact Section */}
       <Contact />
-      <Category />
     </div>
   );
 };

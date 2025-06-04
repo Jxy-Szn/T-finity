@@ -15,6 +15,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface Order {
   _id: string;
@@ -28,9 +37,15 @@ interface Order {
   status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
   createdAt: string;
+  customerInfo: {
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+  };
 }
 
-export default function OrdersPage() {
+export default function AdminOrdersPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -39,7 +54,7 @@ export default function OrdersPage() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await fetch("/api/orders/user");
+        const response = await fetch("/api/orders");
         if (!response.ok) throw new Error("Failed to fetch orders");
         const data = await response.json();
         setOrders(data.orders);
@@ -55,11 +70,40 @@ export default function OrdersPage() {
     }
   }, [user]);
 
+  const updateOrderStatus = async (
+    orderId: string,
+    status: Order["status"]
+  ) => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) throw new Error("Failed to update order status");
+
+      // Update the order in the local state
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order._id === orderId ? { ...order, status } : order
+        )
+      );
+
+      toast.success("Order status updated successfully");
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      toast.error("Failed to update order status");
+    }
+  };
+
   if (authLoading || loading) {
     return <OrdersSkeleton />;
   }
 
-  if (!user) {
+  if (!user || user.role !== "admin") {
     router.push("/signin");
     return null;
   }
@@ -68,7 +112,7 @@ export default function OrdersPage() {
     <div className="container mx-auto px-4 py-8">
       <Card>
         <CardHeader>
-          <CardTitle>My Orders</CardTitle>
+          <CardTitle>All Orders</CardTitle>
         </CardHeader>
         <CardContent>
           {orders.length === 0 ? (
@@ -81,10 +125,12 @@ export default function OrdersPage() {
                 <TableRow>
                   <TableHead>Order ID</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead>Customer</TableHead>
                   <TableHead>Items</TableHead>
                   <TableHead>Total</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Payment</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -97,6 +143,14 @@ export default function OrdersPage() {
                       {format(new Date(order.createdAt), "MMM d, yyyy")}
                     </TableCell>
                     <TableCell>
+                      <div className="text-sm">
+                        <div>{order.customerInfo.name}</div>
+                        <div className="text-muted-foreground">
+                          {order.customerInfo.email}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
                       <div className="flex flex-col gap-1">
                         {order.items.map((item, index) => (
                           <div key={index} className="text-sm">
@@ -107,18 +161,23 @@ export default function OrdersPage() {
                     </TableCell>
                     <TableCell>{formatCurrency(order.total)}</TableCell>
                     <TableCell>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          order.status === "delivered"
-                            ? "bg-green-100 text-green-800"
-                            : order.status === "cancelled"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-yellow-100 text-yellow-800"
-                        }`}
+                      <Select
+                        defaultValue={order.status}
+                        onValueChange={(value: Order["status"]) =>
+                          updateOrderStatus(order._id, value)
+                        }
                       >
-                        {order.status.charAt(0).toUpperCase() +
-                          order.status.slice(1)}
-                      </span>
+                        <SelectTrigger className="w-[130px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="processing">Processing</SelectItem>
+                          <SelectItem value="shipped">Shipped</SelectItem>
+                          <SelectItem value="delivered">Delivered</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell>
                       <span
@@ -133,6 +192,17 @@ export default function OrdersPage() {
                         {order.paymentStatus.charAt(0).toUpperCase() +
                           order.paymentStatus.slice(1)}
                       </span>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          router.push(`/dashboard/orders/${order._id}`)
+                        }
+                      >
+                        View Details
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-04-30.basil",
+  apiVersion: "2025-05-28.basil",
 });
 
 export async function POST(req: Request) {
@@ -42,15 +42,18 @@ export async function POST(req: Request) {
       payment_method_types: ["card"],
       line_items: line_items,
       mode: "payment",
-      // For local development, use localhost URLs
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/payments/unsuccessful`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/unsuccessful`,
       customer_email: customerInfo.email,
+      client_reference_id: customerInfo.userId,
       metadata: {
         customerName: customerInfo.name,
         customerEmail: customerInfo.email,
+        shippingMethod: shipping.id,
+        shippingPrice: shipping.price.toString(),
+        itemCount: items.length.toString(),
+        totalAmount: totalWithShipping.toString(),
         items: JSON.stringify(items),
-        shipping: JSON.stringify(shipping),
       },
       shipping_address_collection: {
         allowed_countries: ["US", "CA", "GB"],

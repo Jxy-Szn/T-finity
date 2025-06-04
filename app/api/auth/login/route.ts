@@ -68,7 +68,7 @@ export async function POST(req: Request) {
 
     // Generate JWT token using jose
     const token = await new SignJWT({
-      userId: user._id,
+      userId: user._id.toString(),
       email: user.email,
       role: user.role,
     })
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
 
     // Prepare user response
     const userResponse = {
-      id: user._id,
+      id: user._id.toString(),
       email: user.email,
       name: user.name,
       role: user.role,
@@ -109,8 +109,8 @@ export async function POST(req: Request) {
     response.cookies.set("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax", // Changed from 'strict' to 'lax' for development
-      path: "/", // Explicitly set path to root
+      sameSite: "lax",
+      path: "/",
       maxAge: 7 * 24 * 60 * 60, // 7 days
     });
 

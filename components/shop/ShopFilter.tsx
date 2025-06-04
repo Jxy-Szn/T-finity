@@ -57,9 +57,7 @@ interface HorizontalFiltersProps {
 }
 
 interface FilterState {
-  categories: string[];
   priceRange: [number, number];
-  brands: string[];
   colors: string[];
   sizes: string[];
   sortBy: string;
@@ -70,12 +68,10 @@ export default function ShopFilters({
   onFilterChange,
 }: HorizontalFiltersProps) {
   const [filters, setFilters] = useState<FilterState>({
-    categories: [],
     priceRange: [0, 500],
-    brands: [],
     colors: [],
     sizes: [],
-    sortBy: "featured",
+    sortBy: "price-desc",
   });
 
   const [activeFiltersCount, setActiveFiltersCount] = useState(0);
@@ -87,8 +83,6 @@ export default function ShopFilters({
 
     // Count active filters
     let count = 0;
-    if (updated.categories.length) count += updated.categories.length;
-    if (updated.brands.length) count += updated.brands.length;
     if (updated.colors.length) count += updated.colors.length;
     if (updated.sizes.length) count += updated.sizes.length;
     if (updated.priceRange[0] > 0 || updated.priceRange[1] < 500) count += 1;
@@ -113,33 +107,19 @@ export default function ShopFilters({
 
   const clearFilters = () => {
     setFilters({
-      categories: [],
       priceRange: [0, 500],
-      brands: [],
       colors: [],
       sizes: [],
-      sortBy: "featured",
+      sortBy: "price-desc",
     });
     setActiveFiltersCount(0);
     onFilterChange?.({
-      categories: [],
       priceRange: [0, 500],
-      brands: [],
       colors: [],
       sizes: [],
-      sortBy: "featured",
+      sortBy: "price-desc",
     });
   };
-
-  const categories = [
-    "Clothing",
-    "Shoes",
-    "Accessories",
-    "Sportswear",
-    "Outerwear",
-  ];
-
-  const brands = ["Nike", "Adidas", "Puma", "Under Armour", "New Balance"];
 
   const colors = [
     { name: "Black", value: "#000000" },
@@ -153,17 +133,12 @@ export default function ShopFilters({
   const sizes = ["XS", "S", "M", "L", "XL", "XXL"];
 
   const sortOptions = [
-    { label: "Featured", value: "featured" },
-    { label: "Price: Low to High", value: "price-asc" },
     { label: "Price: High to Low", value: "price-desc" },
-    { label: "Newest", value: "newest" },
-    { label: "Best Selling", value: "best-selling" },
+    { label: "Price: Low to High", value: "price-asc" },
   ];
 
   const ActiveFilterBadges = () => {
     const activeFilters = [
-      ...filters.categories.map((cat) => ({ type: "categories", value: cat })),
-      ...filters.brands.map((brand) => ({ type: "brands", value: brand })),
       ...filters.colors.map((color) => ({ type: "colors", value: color })),
       ...filters.sizes.map((size) => ({ type: "sizes", value: size })),
       ...(filters.priceRange[0] > 0 || filters.priceRange[1] < 500
@@ -218,74 +193,6 @@ export default function ShopFilters({
       <div className={cn("w-full p-6", className)}>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div className="flex flex-wrap items-center gap-2">
-            {/* Category Filter */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8">
-                  Category
-                  <ChevronDown className="ml-1 h-3 w-3" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-3">
-                <div className="space-y-2">
-                  {categories.map((category) => (
-                    <div key={category} className="flex items-center">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                          "justify-start w-full font-normal",
-                          filters.categories.includes(category) && "font-medium"
-                        )}
-                        onClick={() => toggleFilter("categories", category)}
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          {category}
-                          {filters.categories.includes(category) && (
-                            <Check className="h-4 w-4" />
-                          )}
-                        </div>
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            {/* Brand Filter */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8">
-                  Brand
-                  <ChevronDown className="ml-1 h-3 w-3" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-3">
-                <div className="space-y-2">
-                  {brands.map((brand) => (
-                    <div key={brand} className="flex items-center">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                          "justify-start w-full font-normal",
-                          filters.brands.includes(brand) && "font-medium"
-                        )}
-                        onClick={() => toggleFilter("brands", brand)}
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          {brand}
-                          {filters.brands.includes(brand) && (
-                            <Check className="h-4 w-4" />
-                          )}
-                        </div>
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </PopoverContent>
-            </Popover>
-
             {/* Price Range Filter */}
             <Popover>
               <PopoverTrigger asChild>
@@ -414,7 +321,7 @@ export default function ShopFilters({
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="h-8">
                   {sortOptions.find((opt) => opt.value === filters.sortBy)
-                    ?.label || "Featured"}
+                    ?.label || "Price: High to Low"}
                   <ChevronDown className="ml-1 h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
@@ -458,63 +365,6 @@ export default function ShopFilters({
 
               <ScrollArea className="h-[calc(100vh-8rem)]">
                 <div className="space-y-6 pr-4">
-                  {/* Categories */}
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium">Categories</h3>
-                    <div className="space-y-2">
-                      {categories.map((category) => (
-                        <Button
-                          key={category}
-                          variant="ghost"
-                          size="sm"
-                          className={cn(
-                            "justify-start w-full font-normal",
-                            filters.categories.includes(category) &&
-                              "font-medium"
-                          )}
-                          onClick={() => toggleFilter("categories", category)}
-                        >
-                          <div className="flex items-center justify-between w-full">
-                            {category}
-                            {filters.categories.includes(category) && (
-                              <Check className="h-4 w-4" />
-                            )}
-                          </div>
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* Brands */}
-                  <div className="space-y-3">
-                    <h3 className="text-sm font-medium">Brands</h3>
-                    <div className="space-y-2">
-                      {brands.map((brand) => (
-                        <Button
-                          key={brand}
-                          variant="ghost"
-                          size="sm"
-                          className={cn(
-                            "justify-start w-full font-normal",
-                            filters.brands.includes(brand) && "font-medium"
-                          )}
-                          onClick={() => toggleFilter("brands", brand)}
-                        >
-                          <div className="flex items-center justify-between w-full">
-                            {brand}
-                            {filters.brands.includes(brand) && (
-                              <Check className="h-4 w-4" />
-                            )}
-                          </div>
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Separator />
-
                   {/* Price Range */}
                   <div className="space-y-3">
                     <h3 className="text-sm font-medium">Price Range</h3>
@@ -602,7 +452,7 @@ export default function ShopFilters({
                 </div>
               </ScrollArea>
 
-              <div className="flex items-center justify-between mt-6 pt-4 border-t">
+              <div className="flex gap-2 mt-6">
                 <Button variant="outline" onClick={clearFilters}>
                   Clear all
                 </Button>
