@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/db/mongodb";
+import { connectToDatabase } from "@/lib/mongodb";
 import { Product } from "@/models/product";
 import { getSession } from "@/lib/auth";
 
 export async function GET(request: Request) {
   try {
-    await connectDB();
+    await connectToDatabase();
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("query") || "";
     const category = searchParams.get("category") || "";
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await connectDB();
+    await connectToDatabase();
     const data = await request.json();
 
     // Create a new product without category

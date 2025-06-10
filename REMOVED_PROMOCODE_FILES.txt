@@ -1,0 +1,12 @@
+The following files and code regions related to promocode have been removed from the project as per user request:
+
+- models/promocode.ts
+- components/skeletons/promocodes-table-skeleton.tsx
+- components/skeletons/promocode-form-skeleton.tsx
+- app/components/PromoCodeBanner.tsx
+- app/api/promocodes/route.ts
+- app/api/promocodes/apply/route.ts
+- app/(admin)/dashboard/promocodes/page.tsx
+- app/(admin)/dashboard/promocodes/new/page.tsx
+
+All references in providers/cart-provider.tsx and lib/db/schema.ts have also been removed.

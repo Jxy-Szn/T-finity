@@ -101,8 +101,8 @@ export function LoginForm({
   return (
     <Form {...form}>
       <form
-        className={cn("flex flex-col gap-6", className)}
         onSubmit={form.handleSubmit(onSubmit)}
+        className={cn("space-y-6", className)}
         {...props}
       >
         <div className="flex flex-col items-center gap-2 text-center">
@@ -139,15 +139,7 @@ export function LoginForm({
             name="password"
             render={({ field }) => (
               <FormItem>
-                <div className="flex items-center justify-between">
-                  <FormLabel htmlFor="password">Password</FormLabel>
-                  <Link
-                    href="/forgot-password"
-                    className="text-sm text-purple-500 underline hover:text-purple-600"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
+                <FormLabel htmlFor="password">Password</FormLabel>
                 <FormControl>
                   <div className="relative">
                     <Input
@@ -170,6 +162,14 @@ export function LoginForm({
                     </Button>
                   </div>
                 </FormControl>
+                <div className="flex justify-end mt-1">
+                  <Link
+                    href="/auth/forgot"
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
                 <FormMessage />
               </FormItem>
             )}

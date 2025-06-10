@@ -1,26 +1,23 @@
 import { NextResponse } from "next/server";
-import { MongoClient, GridFSBucket, ObjectId } from "mongodb";
-
-const MONGODB_URI = process.env.MONGODB_URI!;
+import { connectToDatabase } from "@/lib/mongodb";
+import { GridFSBucket, ObjectId } from "mongodb";
+import mongoose from "mongoose";
 
 export async function GET(
   request: Request,
-  { params }: { params: { fileId: string } }
+  context: { params: { fileId: string } }
 ) {
-  let client: MongoClient | null = null;
   try {
-    const fileId = params.fileId;
+    // Use the cached connection
+    await connectToDatabase();
+    const { fileId } = await Promise.resolve(context.params);
     console.log("Fetching image with ID:", fileId);
 
     if (!fileId || !ObjectId.isValid(fileId)) {
       return NextResponse.json({ error: "Invalid file ID" }, { status: 400 });
     }
 
-    // Connect to MongoDB
-    client = new MongoClient(MONGODB_URI);
-    await client.connect();
-
-    const db = client.db();
+    const db = mongoose.connection.db;
     const bucket = new GridFSBucket(db, {
       bucketName: "uploads",
     });
@@ -60,13 +57,5 @@ export async function GET(
       { error: "Failed to serve image" },
       { status: 500 }
     );
-  } finally {
-    if (client) {
-      try {
-        await client.close();
-      } catch (error) {
-        console.error("Error closing MongoDB connection:", error);
-      }
-    }
   }
 }

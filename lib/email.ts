@@ -226,3 +226,27 @@ export async function sendOrderConfirmationEmail({
     throw error;
   }
 }
+
+export async function sendPasswordResetEmail(email: string, token: string) {
+  const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/auth/reset?token=${token}`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto;">
+      <h2>Password Reset Request</h2>
+      <p>You requested a password reset. Click the link below to set a new password. If you did not request this, you can ignore this email.</p>
+      <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background: #2563eb; color: #fff; text-decoration: none; border-radius: 4px;">Reset Password</a>
+      <p style="margin-top: 20px; color: #888;">This link will expire in 1 hour.</p>
+    </div>
+  `;
+  const msg = {
+    to: email,
+    from: process.env.SENDGRID_FROM_EMAIL!,
+    subject: "Password Reset Request",
+    html,
+  };
+  try {
+    await sgMail.send(msg);
+  } catch (error) {
+    console.error("Error sending password reset email:", error);
+    throw error;
+  }
+}

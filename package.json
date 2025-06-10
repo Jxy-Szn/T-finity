@@ -68,6 +68,7 @@
     "libphonenumber-js": "^1.12.7",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.509.0",
+    "mongodb": "^6.17.0",
     "mongoose": "^8.15.0",
     "motion": "^12.12.2",
     "next": "15.3.1",

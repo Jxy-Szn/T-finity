@@ -95,10 +95,16 @@ export async function GET(req: Request) {
     // Connect to MongoDB
     await connectDB();
 
-    // Get user's orders
-    const orders = await Order.find({ userId: session.userId })
-      .sort({ createdAt: -1 })
-      .lean();
+    let orders;
+    if (session.role === "admin") {
+      // Admin: fetch all orders
+      orders = await Order.find({}).sort({ createdAt: -1 }).lean();
+    } else {
+      // Customer: fetch only their orders
+      orders = await Order.find({ userId: session.userId })
+        .sort({ createdAt: -1 })
+        .lean();
+    }
 
     return NextResponse.json({
       orders,

@@ -44,13 +44,11 @@ export default function SuccessPage() {
       return;
     }
 
-    // Clear cart and show success message
-    clearCart();
-    toast.success("Order placed successfully!");
-
-    // Fetch order details only once
+    // Only run once
     if (!hasFetchedOrder.current) {
       hasFetchedOrder.current = true;
+      clearCart();
+      toast.success("Order placed successfully!");
       const fetchOrderDetails = async () => {
         try {
           const response = await fetch(`/api/orders/${orderId}`);
@@ -64,7 +62,6 @@ export default function SuccessPage() {
           setLoading(false);
         }
       };
-
       fetchOrderDetails();
     }
   }, [searchParams, router, clearCart]);

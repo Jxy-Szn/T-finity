@@ -1,0 +1,9 @@
+Deleted the following files as part of removing promocode logic:
+- models/promocode.ts
+- components/skeletons/promocodes-table-skeleton.tsx
+- components/skeletons/promocode-form-skeleton.tsx
+- app/components/PromoCodeBanner.tsx
+- app/api/promocodes/route.ts
+- app/api/promocodes/apply/route.ts
+- app/(admin)/dashboard/promocodes/page.tsx
+- app/(admin)/dashboard/promocodes/new/page.tsx

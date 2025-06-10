@@ -1,0 +1,3 @@
+Removed promocode API routes and related logic from:
+- app/api/promocodes/route.ts
+- app/api/promocodes/apply/route.ts

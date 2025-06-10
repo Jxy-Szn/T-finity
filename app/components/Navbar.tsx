@@ -45,24 +45,38 @@ if (typeof window !== "undefined") {
 }
 
 const Navbar = () => {
-  const { user, loading, logout, checkAuth } = useAuthStore();
+  const { user, loading, checkAuth, clearSession, logout } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
-    console.log("Navbar mounted, checking auth...");
-    checkAuth().then((userData) => {
-      console.log("Auth check result:", userData);
-    });
-  }, [checkAuth]);
+    const verifyAuth = async () => {
+      try {
+        await checkAuth();
+      } catch (error) {
+        console.error("Auth check failed:", error);
+        clearSession();
+      }
+    };
+    verifyAuth();
+  }, [checkAuth, clearSession]);
 
   const handleLogout = async () => {
     try {
-      console.log("Logging out...");
       await logout();
-      console.log("Logout successful");
     } catch (error) {
       console.error("Logout failed:", error);
-      toast.error("Failed to logout. Please try again.");
+      // Force clear session even if logout API fails
+      clearSession();
+      router.push("/");
+    }
+  };
+
+  const handleSignInClick = (e: React.MouseEvent) => {
+    if (user) {
+      e.preventDefault();
+      // If we somehow have a user but the token is invalid, clear the session
+      clearSession();
+      router.push("/signin");
     }
   };
 
@@ -79,7 +93,7 @@ const Navbar = () => {
       <Link href="/">
         <span
           style={{ fontFamily: "Pacifico, cursive" }}
-          className="text-3xl font-medium text-foreground tracking-tight select-none pl-10"
+          className="text-3xl font-medium text-foreground tracking-tight select-none"
         >
           T-finity
         </span>
@@ -143,7 +157,7 @@ const Navbar = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         ) : (
-          <Link href="/signin">
+          <Link href="/signin" onClick={handleSignInClick}>
             <div className="flex items-center space-x-1 cursor-pointer">
               <CircleUser size={24} />
             </div>

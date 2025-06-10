@@ -23,7 +23,7 @@ export async function GET() {
     await connectDB();
 
     // Fetch user's orders
-    const orders = await Order.find({ userId: session.user.id })
+    const orders = await Order.find({ userId: session.userId })
       .sort({ createdAt: -1 })
       .lean();
 

@@ -37,10 +37,6 @@ type CartContextType = {
   subtotal: number;
   shipping: number;
   total: number;
-  promoCode: string;
-  setPromoCode: (code: string) => void;
-  applyPromoCode: () => void;
-  discount: number;
   shippingMethods: ShippingMethod[];
   selectedShippingMethod: ShippingMethod;
   setSelectedShippingMethod: (method: ShippingMethod) => void;
@@ -72,8 +68,6 @@ const defaultShippingMethods: ShippingMethod[] = [
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [promoCode, setPromoCode] = useState("");
-  const [discount, setDiscount] = useState(0);
   const [shippingMethods] = useState<ShippingMethod[]>(defaultShippingMethods);
   const [selectedShippingMethod, setSelectedShippingMethod] =
     useState<ShippingMethod>(() => {
@@ -100,7 +94,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     0
   );
   const shipping = selectedShippingMethod.price;
-  const total = subtotal + shipping - discount;
+  const total = subtotal + shipping;
 
   // Log cart state changes
   useEffect(() => {
@@ -110,9 +104,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       shipping,
       total,
       selectedShippingMethod,
-      discount,
     });
-  }, [items, subtotal, shipping, total, selectedShippingMethod, discount]);
+  }, [items, subtotal, shipping, total, selectedShippingMethod]);
 
   // Load cart from localStorage on client
   useEffect(() => {
@@ -195,33 +188,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const closeCart = () => setIsOpen(false);
   const openCart = () => setIsOpen(true);
 
-  const applyPromoCode = async () => {
-    if (!promoCode.trim()) {
-      toast.error("Please enter a promo code");
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/promocodes/apply?code=${promoCode}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to apply promo code");
-      }
-
-      if (data.type === "percentage") {
-        setDiscount(subtotal * (data.discount / 100));
-      } else {
-        setDiscount(data.discount);
-      }
-
-      toast.success("Promo code applied successfully");
-    } catch (error: any) {
-      setDiscount(0);
-      toast.error(error.message || "Failed to apply promo code");
-    }
-  };
-
   return (
     <CartContext.Provider
       value={{
@@ -238,10 +204,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         subtotal,
         shipping,
         total,
-        promoCode,
-        setPromoCode,
-        applyPromoCode,
-        discount,
         shippingMethods,
         selectedShippingMethod,
         setSelectedShippingMethod,

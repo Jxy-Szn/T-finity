@@ -131,11 +131,6 @@ const Page = () => {
       <CartSidebar />
       <Hero />
 
-      {/* Categories Section */}
-      <div className="mt-12">
-        <Category />
-      </div>
-
       {/* Products Section */}
       <div className="container mx-auto px-4 py-8 mt-12">
         <h2 className="text-2xl font-bold mb-6">Our Products</h2>

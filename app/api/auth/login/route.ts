@@ -64,13 +64,12 @@ export async function POST(req: Request) {
         { error: "Invalid credentials" },
         { status: 401 }
       );
-    }
-
-    // Generate JWT token using jose
+    } // Generate JWT token using jose
     const token = await new SignJWT({
       userId: user._id.toString(),
       email: user.email,
       role: user.role,
+      name: user.name,
     })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()

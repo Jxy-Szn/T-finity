@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -87,101 +86,94 @@ export default function NewPromocodePage() {
         <h1 className="text-3xl font-bold">Create New Promocode</h1>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Promocode Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="code">Promocode</Label>
-                <Input
-                  id="code"
-                  name="code"
-                  placeholder="Enter promocode"
-                  required
-                  pattern="[A-Z0-9]+"
-                  title="Only uppercase letters and numbers allowed"
-                  disabled={loading}
-                />
-              </div>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Label htmlFor="code">Promocode</Label>
+            <Input
+              id="code"
+              name="code"
+              placeholder="Enter promocode"
+              required
+              pattern="[A-Z0-9]+"
+              title="Only uppercase letters and numbers allowed"
+              disabled={loading}
+            />
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="type">Discount Type</Label>
-                <Select
-                  name="type"
-                  required
-                  defaultValue="percentage"
-                  onValueChange={(value: "percentage" | "fixed") =>
-                    setDiscountType(value)
-                  }
-                  disabled={loading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="percentage">Percentage</SelectItem>
-                    <SelectItem value="fixed">Fixed Amount</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="type">Discount Type</Label>
+            <Select
+              name="type"
+              required
+              defaultValue="percentage"
+              onValueChange={(value: "percentage" | "fixed") =>
+                setDiscountType(value)
+              }
+              disabled={loading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="percentage">Percentage</SelectItem>
+                <SelectItem value="fixed">Fixed Amount</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="discount">Discount Value</Label>
-                <Input
-                  id="discount"
-                  name="discount"
-                  type="number"
-                  min="1"
-                  max={discountType === "percentage" ? "100" : "1000"}
-                  required
-                  disabled={loading}
-                />
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="discount">Discount Value</Label>
+            <Input
+              id="discount"
+              name="discount"
+              type="number"
+              min="1"
+              max={discountType === "percentage" ? "100" : "1000"}
+              required
+              disabled={loading}
+            />
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="maxUsage">Maximum Usage</Label>
-                <Input
-                  id="maxUsage"
-                  name="maxUsage"
-                  type="number"
-                  min="1"
-                  required
-                  disabled={loading}
-                />
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="maxUsage">Maximum Usage</Label>
+            <Input
+              id="maxUsage"
+              name="maxUsage"
+              type="number"
+              min="1"
+              required
+              disabled={loading}
+            />
+          </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="expiresAt">Expiry Date</Label>
-                <Input
-                  id="expiresAt"
-                  name="expiresAt"
-                  type="datetime-local"
-                  required
-                  min={new Date().toISOString().slice(0, 16)}
-                  disabled={loading}
-                />
-              </div>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="expiresAt">Expiry Date</Label>
+            <Input
+              id="expiresAt"
+              name="expiresAt"
+              type="datetime-local"
+              required
+              min={new Date().toISOString().slice(0, 16)}
+              disabled={loading}
+            />
+          </div>
+        </div>
 
-            <div className="flex justify-end space-x-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.back()}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Creating..." : "Create Promocode"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+        <div className="flex justify-end space-x-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.back()}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? "Creating..." : "Create Promocode"}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 }

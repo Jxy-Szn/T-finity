@@ -17,7 +17,6 @@ import {
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 export function CartSidebar() {
@@ -32,10 +31,6 @@ export function CartSidebar() {
     subtotal,
     shipping,
     total,
-    promoCode,
-    setPromoCode,
-    applyPromoCode,
-    discount,
     shippingMethods,
     selectedShippingMethod,
     setSelectedShippingMethod,
@@ -45,7 +40,6 @@ export function CartSidebar() {
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [shippingDropdownOpen, setShippingDropdownOpen] = useState(false);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
 
   // Handle click outside to close
   useEffect(() => {
@@ -270,14 +264,6 @@ export function CartSidebar() {
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>{formatCurrency(subtotal)}</span>
                   </div>
-                  {discount > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Discount</span>
-                      <span className="text-green-600">
-                        -{formatCurrency(discount)}
-                      </span>
-                    </div>
-                  )}
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Shipping</span>
                     <span>{formatCurrency(shipping)}</span>
@@ -285,26 +271,6 @@ export function CartSidebar() {
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Total</span>
                     <span className="font-medium">{formatCurrency(total)}</span>
-                  </div>
-                </div>
-
-                {/* Promo Code */}
-                <div className="mt-4">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Enter promo code"
-                      value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
-                      className="flex-1"
-                    />
-                    <Button
-                      variant="outline"
-                      onClick={applyPromoCode}
-                      disabled={isApplyingPromo || !promoCode.trim()}
-                      className="cursor-pointer"
-                    >
-                      Apply
-                    </Button>
                   </div>
                 </div>
 
