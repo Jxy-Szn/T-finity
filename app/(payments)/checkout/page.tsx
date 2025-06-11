@@ -14,7 +14,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { loadStripe } from "@stripe/stripe-js";
 import { toast } from "sonner";
 import Image from "next/image";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 // Initialize Stripe
 let stripePromise: Promise<any> | null = null;
@@ -39,7 +38,6 @@ interface CheckoutFormData {
   state: string;
   zipCode: string;
   country: string;
-  paymentMethod: "card" | "cod";
 }
 
 function CheckoutSkeleton() {
@@ -93,7 +91,6 @@ export default function CheckoutPage() {
     state: "",
     zipCode: "",
     country: "",
-    paymentMethod: "card",
   });
   const [selectedCountry, setSelectedCountry] = useState<{
     value: string;
@@ -204,19 +201,14 @@ export default function CheckoutPage() {
   const handleCheckout = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsProcessing(true);
-
     try {
       if (!user) {
         throw new Error("Please sign in to continue");
       }
-
-      // Validate form data
       if (!validateForm()) {
         setIsProcessing(false);
         return;
       }
-
-      // Get cart items
       const cartItems = items.map((item) => ({
         id: item.id,
         name: item.name,
@@ -226,97 +218,106 @@ export default function CheckoutPage() {
         color: item.color,
         variant: item.variant,
       }));
+      const response = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cartItems,
+          shipping: selectedShippingMethod,
+          customerInfo: {
+            name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            phone: formData.phone,
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zipCode: formData.zipCode,
+            country: formData.country,
+            userId: user.id,
+          },
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create checkout session");
+      }
+      const stripe = await getStripe();
+      if (!stripe) throw new Error("Stripe.js failed to load");
+      const { error } = await stripe.redirectToCheckout({
+        sessionId: data.sessionId,
+      });
+      if (error) throw new Error(error.message);
+    } catch (error) {
+      console.error("Checkout error:", error);
+      toast.error(error instanceof Error ? error.message : "Checkout failed");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
-      // Calculate total
+  // Add a handler for cash payment
+  const handleCashPayment = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    try {
+      if (!user) {
+        throw new Error("Please sign in to continue");
+      }
+      if (!validateForm()) {
+        setIsProcessing(false);
+        return;
+      }
+      const cartItems = items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image,
+        color: item.color,
+        variant: item.variant,
+      }));
       const cartSubtotal = cartItems.reduce(
         (sum, item) => sum + item.price * item.quantity,
         0
       );
       const cartTotal = cartSubtotal + selectedShippingMethod.price;
-
-      if (formData.paymentMethod === "card") {
-        // Handle card payment
-        const response = await fetch("/api/create-checkout-session", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cartItems,
+          shippingMethod: selectedShippingMethod.id,
+          total: cartTotal,
+          customer: {
+            name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            phone: formData.phone,
+            address: formData.address,
+            city: formData.city,
+            state: formData.state,
+            zipCode: formData.zipCode,
+            country: formData.country,
           },
-          body: JSON.stringify({
-            items: cartItems,
-            shipping: selectedShippingMethod,
-            customerInfo: {
-              name: `${formData.firstName} ${formData.lastName}`,
-              email: formData.email,
-              phone: formData.phone,
-              address: formData.address,
-              city: formData.city,
-              state: formData.state,
-              zipCode: formData.zipCode,
-              country: formData.country,
-              userId: user.id,
-            },
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to create checkout session");
-        }
-
-        // Use Stripe.js to redirect to checkout
-        const stripe = await getStripe();
-        if (!stripe) throw new Error("Stripe.js failed to load");
-        const { error } = await stripe.redirectToCheckout({
-          sessionId: data.sessionId,
-        });
-        if (error) throw new Error(error.message);
-      } else {
-        // Handle Cash on Delivery
-        const response = await fetch("/api/orders", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            items: cartItems,
-            shippingMethod: selectedShippingMethod.id,
-            total: cartTotal,
-            customer: {
-              name: `${formData.firstName} ${formData.lastName}`,
-              email: formData.email,
-              phone: formData.phone,
-              address: formData.address,
-              city: formData.city,
-              state: formData.state,
-              zipCode: formData.zipCode,
-              country: formData.country,
-            },
-            paymentMethod: "cod",
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to create order");
-        }
-
-        if (!data.orderId) {
-          throw new Error("No order ID received");
-        }
-
-        clearCart();
-        toast.success("Order placed successfully!");
-
-        // Redirect to success page
-        const successUrl = `/success?orderId=${data.orderId}&paymentMethod=cod`;
-        console.log("Redirecting to:", successUrl);
-        window.location.href = successUrl;
+          paymentMethod: "cod",
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create order");
       }
+      if (!data.orderId) {
+        throw new Error("No order ID received");
+      }
+      clearCart();
+      toast.success("Order placed successfully!");
+      // Redirect to success page
+      const successUrl = `/success?orderId=${data.orderId}&paymentMethod=cod`;
+      window.location.href = successUrl;
     } catch (error) {
-      console.error("Checkout error:", error);
-      toast.error(error instanceof Error ? error.message : "Checkout failed");
+      console.error("Cash payment error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Cash payment failed"
+      );
     } finally {
       setIsProcessing(false);
     }
@@ -440,31 +441,32 @@ export default function CheckoutPage() {
                   />
                 </div>
               </div>
-              <div className="space-y-4">
-                <Label>Payment Method</Label>
-                <RadioGroup
-                  value={formData.paymentMethod}
-                  onValueChange={(value) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      paymentMethod: value as "card" | "cod",
-                    }))
-                  }
-                  className="flex flex-col space-y-2"
+              {/* Payment buttons and OR separator */}
+              <div className="flex flex-col items-center gap-4 mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  disabled={isProcessing}
+                  onClick={handleCashPayment}
                 >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="card" id="card" />
-                    <Label htmlFor="card">Credit Card</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="cod" id="cod" />
-                    <Label htmlFor="cod">Cash on Delivery</Label>
-                  </div>
-                </RadioGroup>
+                  {isProcessing ? "Processing..." : "Pay with Cash"}
+                </Button>
+                <div className="flex items-center w-full gap-2">
+                  <Separator className="flex-1" />
+                  <span className="text-muted-foreground text-xs font-medium">
+                    OR
+                  </span>
+                  <Separator className="flex-1" />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? "Processing..." : "Pay with Card"}
+                </Button>
               </div>
-              <Button type="submit" className="w-full" disabled={isProcessing}>
-                {isProcessing ? "Processing..." : "Proceed to Checkout"}
-              </Button>
             </form>
           </CardContent>
         </Card>

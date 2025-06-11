@@ -39,31 +39,51 @@ export async function POST(req: Request) {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       const customerDetails = session.customer_details;
+      // Debug log all session and metadata
+      console.log(
+        "[Stripe Webhook] session:",
+        JSON.stringify(session, null, 2)
+      );
+      console.log("[Stripe Webhook] session.metadata:", session.metadata);
       // Create order in database
-      await Order.create({
-        userId: session.client_reference_id,
-        items: session.metadata?.items
-          ? JSON.parse(session.metadata.items)
-          : [],
-        shipping: {
-          id: session.metadata?.shippingMethod,
-          name: session.metadata?.shippingMethod, // Use shipping method name from metadata
-          price: Number(session.metadata?.shippingPrice) || 0,
-        },
-        total: Number(session.metadata?.totalAmount) || 0,
-        customerInfo: {
-          email: session.customer_email || customerDetails?.email || "",
-          name: session.metadata?.customerName || customerDetails?.name || "",
-          address: customerDetails?.address?.line1 || "",
-          city: customerDetails?.address?.city || "",
-          state: customerDetails?.address?.state || "",
-          zipCode: customerDetails?.address?.postal_code || "",
-          phone: customerDetails?.phone || "",
-        },
-        status: "pending",
-        paymentStatus: "paid",
-        paymentMethod: "card",
-      });
+      // Fix: Only create order if client_reference_id (userId) is present
+      if (session.client_reference_id) {
+        try {
+          const createdOrder = await Order.create({
+            userId: session.client_reference_id,
+            items: session.metadata?.items
+              ? JSON.parse(session.metadata.items)
+              : [],
+            shipping: {
+              id: session.metadata?.shippingMethod,
+              name: session.metadata?.shippingMethod, // Use shipping method name from metadata
+              price: Number(session.metadata?.shippingPrice) || 0,
+            },
+            total: Number(session.metadata?.totalAmount) || 0,
+            customerInfo: {
+              email: session.customer_email || customerDetails?.email || "",
+              name:
+                session.metadata?.customerName || customerDetails?.name || "",
+              address: customerDetails?.address?.line1 || "",
+              city: customerDetails?.address?.city || "",
+              state: customerDetails?.address?.state || "",
+              zipCode: customerDetails?.address?.postal_code || "",
+              phone: customerDetails?.phone || "",
+            },
+            status: "pending",
+            paymentStatus: "paid",
+            paymentMethod: "card",
+            stripeSessionId: session.id, // Add this line
+          });
+          console.log("[Stripe Webhook] Order created:", createdOrder);
+        } catch (orderError) {
+          console.error("[Stripe Webhook] Error creating order:", orderError);
+        }
+      } else {
+        console.error(
+          "Stripe session missing client_reference_id (userId). Order not created."
+        );
+      }
     }
 
     return NextResponse.json({ received: true });

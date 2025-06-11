@@ -37,25 +37,39 @@ export default function SuccessPage() {
   useEffect(() => {
     const orderId = searchParams.get("orderId");
     const paymentMethod = searchParams.get("paymentMethod");
-
-    if (!orderId) {
-      toast.error("Invalid order");
-      router.push("/");
-      return;
-    }
+    const sessionId = searchParams.get("session_id");
 
     // Only run once
     if (!hasFetchedOrder.current) {
       hasFetchedOrder.current = true;
-      clearCart();
-      toast.success("Order placed successfully!");
       const fetchOrderDetails = async () => {
         try {
-          const response = await fetch(`/api/orders/${orderId}`);
-          if (response.ok) {
-            const data = await response.json();
-            setOrderDetails(data.order);
+          let order = null;
+          if (orderId) {
+            const response = await fetch(`/api/orders/${orderId}`);
+            if (response.ok) {
+              const data = await response.json();
+              order = data.order;
+            } else {
+              toast.error("Invalid order");
+              return;
+            }
+          } else if (sessionId) {
+            const response = await fetch(`/api/orders/by-session/${sessionId}`);
+            if (response.ok) {
+              const data = await response.json();
+              order = data.order;
+            } else {
+              toast.error("Invalid Stripe session");
+              return;
+            }
+          } else {
+            toast.error("Invalid order");
+            return;
           }
+          setOrderDetails(order);
+          clearCart();
+          toast.success("Order placed successfully!");
         } catch (error) {
           console.error("Error fetching order details:", error);
         } finally {
@@ -64,7 +78,7 @@ export default function SuccessPage() {
       };
       fetchOrderDetails();
     }
-  }, [searchParams, router, clearCart]);
+  }, [searchParams, clearCart]);
 
   if (loading) {
     return (

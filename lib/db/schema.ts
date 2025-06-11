@@ -56,6 +56,7 @@ export interface IOrder {
   status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
   paymentMethod: "cod" | "card"; // <-- added
+  stripeSessionId?: string; // Add this field for Stripe orders
   createdAt: Date;
   updatedAt: Date;
 }
@@ -182,7 +183,12 @@ const orderSchema = new Schema<IOrder>(
       type: String,
       enum: ["cod", "card"],
       required: true,
-    }, // <-- added
+    },
+    stripeSessionId: {
+      type: String,
+      required: false,
+      index: true,
+    }, // <-- add this for Stripe orders
   },
   {
     timestamps: true,
