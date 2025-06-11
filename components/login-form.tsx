@@ -180,7 +180,7 @@ export function LoginForm({
           </Button>
 
           {/* OAuth Providers Section */}
-          <div className="relative text-center text-sm">
+          {/* <div className="relative text-center text-sm">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t" />
             </div>
@@ -229,7 +229,7 @@ export function LoginForm({
             >
               <Github className="h-5 w-5" />
             </Button>
-          </div>
+          </div> */}
         </div>
         <div className="text-center text-sm">
           Don&apos;t have an account?{" "}

@@ -26,7 +26,6 @@ export async function GET() {
       typeof session.userId === "object" && "buffer" in session.userId
         ? Buffer.from(Object.values(session.userId.buffer)).toString("hex")
         : session.userId;
-
     // Convert hex string to ObjectId
     const userId = new mongoose.Types.ObjectId(userIdString);
 

@@ -24,6 +24,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Banknote, CreditCard } from "lucide-react";
 
 interface Order {
   _id: string;
@@ -36,6 +38,7 @@ interface Order {
   total: number;
   status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
+  paymentMethod: "cod" | "card"; // <-- add this line
   createdAt: string;
   customerInfo: {
     name: string;
@@ -50,6 +53,7 @@ export default function AdminOrdersPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState("cash");
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -64,11 +68,14 @@ export default function AdminOrdersPage() {
         setLoading(false);
       }
     };
-
     if (user) {
       fetchOrders();
     }
   }, [user]);
+
+  // Filter orders by payment method
+  const cashOrders = orders.filter((order) => order.paymentMethod === "cod");
+  const onlineOrders = orders.filter((order) => order.paymentMethod === "card");
 
   const updateOrderStatus = async (
     orderId: string,
@@ -99,6 +106,159 @@ export default function AdminOrdersPage() {
     }
   };
 
+  // Extracted OrdersTable component for reuse in both tabs
+  function OrdersTable({
+    orders,
+    updateOrderStatus,
+    setOrders,
+    router,
+    toast,
+  }: {
+    orders: Order[];
+    updateOrderStatus: (orderId: string, status: Order["status"]) => void;
+    setOrders: React.Dispatch<React.SetStateAction<Order[]>>;
+    router: any;
+    toast: any;
+  }) {
+    return orders.length === 0 ? (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">No orders found</p>
+      </div>
+    ) : (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Order ID</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Customer</TableHead>
+            <TableHead>Items</TableHead>
+            <TableHead>Total</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Payment</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {orders.map((order) => (
+            <TableRow key={order._id}>
+              <TableCell className="font-medium">
+                {order._id.slice(-6).toUpperCase()}
+              </TableCell>
+              <TableCell>
+                {format(new Date(order.createdAt), "MMM d, yyyy")}
+              </TableCell>
+              <TableCell>
+                <div className="text-sm">
+                  <div>{order.customerInfo.name}</div>
+                  <div className="text-muted-foreground">
+                    {order.customerInfo.email}
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-col gap-1">
+                  {order.items.map((item, index) => (
+                    <div key={index} className="text-sm">
+                      {item.name} x {item.quantity}
+                    </div>
+                  ))}
+                </div>
+              </TableCell>
+              <TableCell>{formatCurrency(order.total)}</TableCell>
+              <TableCell>
+                <Select
+                  value={order.status}
+                  onValueChange={(value) =>
+                    updateOrderStatus(order._id, value as Order["status"])
+                  }
+                >
+                  <SelectTrigger className="w-[130px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="processing">Processing</SelectItem>
+                    <SelectItem value="shipped">Shipped</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </TableCell>
+              <TableCell>
+                {order.paymentStatus === "pending" ? (
+                  <Select
+                    value={order.paymentStatus}
+                    onValueChange={async (value) => {
+                      try {
+                        const response = await fetch(
+                          `/api/orders/${order._id}/payment`,
+                          {
+                            method: "PATCH",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ paymentStatus: value }),
+                          }
+                        );
+                        if (!response.ok)
+                          throw new Error("Failed to update payment status");
+                        setOrders((prevOrders) =>
+                          prevOrders.map((o) =>
+                            o._id === order._id
+                              ? { ...o, paymentStatus: value }
+                              : o
+                          )
+                        );
+                        toast.success("Payment status updated successfully");
+                      } catch (error) {
+                        console.error("Error updating payment status:", error);
+                        toast.error("Failed to update payment status");
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="w-[130px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                      <SelectItem value="refunded">Refunded</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <span
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      order.paymentStatus === "paid"
+                        ? "bg-green-100 text-green-800"
+                        : order.paymentStatus === "failed"
+                          ? "bg-red-100 text-red-800"
+                          : order.paymentStatus === "refunded"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-yellow-100 text-yellow-800"
+                    }`}
+                  >
+                    {order.paymentStatus.charAt(0).toUpperCase() +
+                      order.paymentStatus.slice(1)}
+                  </span>
+                )}
+              </TableCell>
+              <TableCell>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => router.push(`/dashboard/orders/${order._id}`)}
+                >
+                  View Details
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  }
+
   if (authLoading || loading) {
     return <OrdersSkeleton />;
   }
@@ -115,100 +275,34 @@ export default function AdminOrdersPage() {
           <CardTitle>All Orders</CardTitle>
         </CardHeader>
         <CardContent>
-          {orders.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">No orders found</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Order ID</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Items</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Payment</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orders.map((order) => (
-                  <TableRow key={order._id}>
-                    <TableCell className="font-medium">
-                      {order._id.slice(-6).toUpperCase()}
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(order.createdAt), "MMM d, yyyy")}
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        <div>{order.customerInfo.name}</div>
-                        <div className="text-muted-foreground">
-                          {order.customerInfo.email}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        {order.items.map((item, index) => (
-                          <div key={index} className="text-sm">
-                            {item.name} x {item.quantity}
-                          </div>
-                        ))}
-                      </div>
-                    </TableCell>
-                    <TableCell>{formatCurrency(order.total)}</TableCell>
-                    <TableCell>
-                      <Select
-                        defaultValue={order.status}
-                        onValueChange={(value: Order["status"]) =>
-                          updateOrderStatus(order._id, value)
-                        }
-                      >
-                        <SelectTrigger className="w-[130px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="processing">Processing</SelectItem>
-                          <SelectItem value="shipped">Shipped</SelectItem>
-                          <SelectItem value="delivered">Delivered</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          order.paymentStatus === "paid"
-                            ? "bg-green-100 text-green-800"
-                            : order.paymentStatus === "failed"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {order.paymentStatus.charAt(0).toUpperCase() +
-                          order.paymentStatus.slice(1)}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          router.push(`/dashboard/orders/${order._id}`)
-                        }
-                      >
-                        View Details
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          <Tabs value={tab} onValueChange={setTab} className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="cash">
+                <Banknote className="mr-2" /> Cash Payments
+              </TabsTrigger>
+              <TabsTrigger value="online">
+                <CreditCard className="mr-2" /> Online Payments
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="cash">
+              <OrdersTable
+                orders={cashOrders}
+                updateOrderStatus={updateOrderStatus}
+                setOrders={setOrders}
+                router={router}
+                toast={toast}
+              />
+            </TabsContent>
+            <TabsContent value="online">
+              <OrdersTable
+                orders={onlineOrders}
+                updateOrderStatus={updateOrderStatus}
+                setOrders={setOrders}
+                router={router}
+                toast={toast}
+              />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>

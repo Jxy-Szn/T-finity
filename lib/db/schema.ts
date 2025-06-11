@@ -55,6 +55,7 @@ export interface IOrder {
   };
   status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
+  paymentMethod: "cod" | "card"; // <-- added
   createdAt: Date;
   updatedAt: Date;
 }
@@ -177,6 +178,11 @@ const orderSchema = new Schema<IOrder>(
       enum: ["pending", "paid", "failed", "refunded"],
       default: "pending",
     },
+    paymentMethod: {
+      type: String,
+      enum: ["cod", "card"],
+      required: true,
+    }, // <-- added
   },
   {
     timestamps: true,

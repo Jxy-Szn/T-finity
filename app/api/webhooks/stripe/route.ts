@@ -13,7 +13,13 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 export async function POST(req: Request) {
   try {
     const body = await req.text();
-    const signature = headers().get("stripe-signature")!;
+    const signature = (await headers()).get("stripe-signature");
+    if (!signature) {
+      return NextResponse.json(
+        { error: "Missing Stripe signature" },
+        { status: 400 }
+      );
+    }
 
     let event: Stripe.Event;
 
@@ -32,7 +38,7 @@ export async function POST(req: Request) {
 
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
-
+      const customerDetails = session.customer_details;
       // Create order in database
       await Order.create({
         userId: session.client_reference_id,
@@ -41,21 +47,22 @@ export async function POST(req: Request) {
           : [],
         shipping: {
           id: session.metadata?.shippingMethod,
-          name: session.shipping_options?.[0]?.shipping_rate_data?.display_name,
+          name: session.metadata?.shippingMethod, // Use shipping method name from metadata
           price: Number(session.metadata?.shippingPrice) || 0,
         },
         total: Number(session.metadata?.totalAmount) || 0,
         customerInfo: {
-          email: session.customer_email,
-          name: session.metadata?.customerName,
-          address: session.shipping?.address?.line1,
-          city: session.shipping?.address?.city,
-          state: session.shipping?.address?.state,
-          zipCode: session.shipping?.address?.postal_code,
-          phone: session.customer_phone,
+          email: session.customer_email || customerDetails?.email || "",
+          name: session.metadata?.customerName || customerDetails?.name || "",
+          address: customerDetails?.address?.line1 || "",
+          city: customerDetails?.address?.city || "",
+          state: customerDetails?.address?.state || "",
+          zipCode: customerDetails?.address?.postal_code || "",
+          phone: customerDetails?.phone || "",
         },
         status: "pending",
         paymentStatus: "paid",
+        paymentMethod: "card",
       });
     }
 

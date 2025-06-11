@@ -67,6 +67,7 @@ export async function POST(req: Request) {
       userId: session.userId,
       status: "pending",
       paymentStatus: "pending",
+      paymentMethod, // <-- add this line
     });
 
     console.log("Created order:", order);

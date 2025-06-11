@@ -79,14 +79,8 @@ function CheckoutSkeleton() {
 export default function CheckoutPage() {
   const { user, loading, checkAuth } = useAuth();
   const router = useRouter();
-  const {
-    items,
-    clearCart,
-    selectedShippingMethod,
-    total,
-    subtotal,
-    discount,
-  } = useCart();
+  const { items, clearCart, selectedShippingMethod, total, subtotal } =
+    useCart();
   const [isChecking, setIsChecking] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [formData, setFormData] = useState<CheckoutFormData>({
@@ -101,6 +95,24 @@ export default function CheckoutPage() {
     country: "",
     paymentMethod: "card",
   });
+  const [selectedCountry, setSelectedCountry] = useState<{
+    value: string;
+    label: string;
+  } | null>(null);
+  const [selectedState, setSelectedState] = useState<{
+    value: string;
+    label: string;
+  } | null>(null);
+  const [selectedCity, setSelectedCity] = useState<{
+    value: string;
+    label: string;
+  } | null>(null);
+  const [stateOptions, setStateOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
+  const [cityOptions, setCityOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
 
   useEffect(() => {
     const checkAuthentication = async () => {
@@ -252,8 +264,13 @@ export default function CheckoutPage() {
           throw new Error(data.error || "Failed to create checkout session");
         }
 
-        // Redirect to Stripe Checkout
-        window.location.href = data.url;
+        // Use Stripe.js to redirect to checkout
+        const stripe = await getStripe();
+        if (!stripe) throw new Error("Stripe.js failed to load");
+        const { error } = await stripe.redirectToCheckout({
+          sessionId: data.sessionId,
+        });
+        if (error) throw new Error(error.message);
       } else {
         // Handle Cash on Delivery
         const response = await fetch("/api/orders", {
@@ -500,12 +517,6 @@ export default function CheckoutPage() {
                 <span>Shipping ({selectedShippingMethod.name})</span>
                 <span>{formatCurrency(selectedShippingMethod.price)}</span>
               </div>
-              {discount > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span>Discount</span>
-                  <span>-{formatCurrency(discount)}</span>
-                </div>
-              )}
               <Separator />
               <div className="flex justify-between font-bold">
                 <span>Total</span>

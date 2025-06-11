@@ -100,14 +100,6 @@ const AdminSidebar = () => {
                   </SidebarMenuSubItem>
                 </SidebarMenuSub>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/dashboard/categories">
-                    <Tags />
-                    <span>Categories</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -139,40 +131,6 @@ const AdminSidebar = () => {
                   <Link href="/dashboard/orders">
                     <ShoppingCart />
                     <span>Orders</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Discounts & Coupons */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Discounts & Coupons</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/dashboard/promocodes">
-                    <Gift />
-                    <span>Promo Codes</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Reviews */}
-        <SidebarGroup>
-          <SidebarGroupLabel>Reviews</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/dashboard/reviews">
-                    <Star />
-                    <span>All Reviews</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

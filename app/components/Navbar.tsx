@@ -72,12 +72,12 @@ const Navbar = () => {
   };
 
   const handleSignInClick = (e: React.MouseEvent) => {
-    if (user) {
-      e.preventDefault();
-      // If we somehow have a user but the token is invalid, clear the session
-      clearSession();
-      router.push("/signin");
-    }
+    e.preventDefault();
+    // Always clear session and token before navigating to /signin
+    clearSession();
+    // Also clear the token cookie directly (in case clearSession is not enough)
+    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    router.push("/signin");
   };
 
   const handleSupportClick = () => {

@@ -24,9 +24,22 @@ export async function PUT(request: Request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // Convert Buffer to ObjectId
-    const userIdBuffer = Buffer.from(Object.values(session.userId.buffer));
-    const userId = new ObjectId(userIdBuffer);
+    // Convert userId to ObjectId (support both string and legacy buffer)
+    let userId: ObjectId;
+    if (typeof session.userId === "string") {
+      userId = new ObjectId(session.userId);
+    } else if (
+      session.userId &&
+      typeof session.userId === "object" &&
+      "buffer" in session.userId
+    ) {
+      userId = new ObjectId(Buffer.from(Object.values(session.userId.buffer)));
+    } else {
+      return NextResponse.json(
+        { message: "Invalid user ID in session" },
+        { status: 400 }
+      );
+    }
 
     const data = await request.json();
 
